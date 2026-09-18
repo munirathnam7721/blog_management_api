@@ -7,6 +7,10 @@ from pydantic import (
 )
 
 
+# =========================================================
+# CREATE POST
+# =========================================================
+
 class PostCreate(BaseModel):
 
     title: str = Field(
@@ -20,6 +24,10 @@ class PostCreate(BaseModel):
         min_length=1
     )
 
+
+# =========================================================
+# UPDATE POST
+# =========================================================
 
 class PostUpdate(BaseModel):
 
@@ -35,6 +43,27 @@ class PostUpdate(BaseModel):
     )
 
 
+# =========================================================
+# POST IMAGE RESPONSE
+# =========================================================
+
+class PostImageResponse(BaseModel):
+
+    id: int
+
+    post_id: int
+
+    image: str
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+# =========================================================
+# POST RESPONSE
+# =========================================================
+
 class PostResponse(BaseModel):
 
     id: int
@@ -43,7 +72,11 @@ class PostResponse(BaseModel):
 
     content: str
 
+    # Existing image field
     image: str | None = None
+
+    # New multiple images field
+    images: list[PostImageResponse] = []
 
     author_id: int
 

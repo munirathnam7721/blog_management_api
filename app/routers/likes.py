@@ -29,6 +29,10 @@ from app.services.email_service import (
     send_email
 )
 
+from app.services.subscription_service import (
+    check_like_limit
+)
+
 
 router = APIRouter(
     prefix="/posts",
@@ -53,7 +57,10 @@ def like_post(
     )
 ):
 
-    # Check post
+    # ==========================================
+    # 1. CHECK POST
+    # ==========================================
+
     post = db.query(
         Post
     ).filter(
@@ -67,7 +74,10 @@ def like_post(
             detail="Post not found"
         )
 
-    # Check existing like
+    # ==========================================
+    # 2. CHECK EXISTING LIKE
+    # ==========================================
+
     existing_like = db.query(
         Like
     ).filter(
@@ -82,7 +92,19 @@ def like_post(
             detail="You already liked this post"
         )
 
-    # Create like
+    # ==========================================
+    # 3. CHECK SUBSCRIPTION LIKE LIMIT
+    # ==========================================
+
+    check_like_limit(
+        db=db,
+        user_id=current_user.id
+    )
+
+    # ==========================================
+    # 4. CREATE LIKE
+    # ==========================================
+
     like = Like(
         post_id=post_id,
         user_id=current_user.id
@@ -92,7 +114,10 @@ def like_post(
 
     db.commit()
 
-    # Send notification
+    # ==========================================
+    # 5. SEND EMAIL NOTIFICATION
+    # ==========================================
+
     if post.author.email != current_user.email:
 
         email_body = (

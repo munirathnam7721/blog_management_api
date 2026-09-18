@@ -34,6 +34,7 @@ class Post(Base):
         nullable=False
     )
 
+    # Existing single image field
     image = Column(
         String(500),
         nullable=True
@@ -50,10 +51,18 @@ class Post(Base):
         default=datetime.utcnow
     )
 
+    # ==========================================
+    # AUTHOR
+    # ==========================================
+
     author = relationship(
         "User",
         back_populates="posts"
     )
+
+    # ==========================================
+    # COMMENTS
+    # ==========================================
 
     comments = relationship(
         "Comment",
@@ -61,8 +70,22 @@ class Post(Base):
         cascade="all, delete-orphan"
     )
 
+    # ==========================================
+    # LIKES
+    # ==========================================
+
     likes = relationship(
         "Like",
+        back_populates="post",
+        cascade="all, delete-orphan"
+    )
+
+    # ==========================================
+    # MULTIPLE IMAGES
+    # ==========================================
+
+    images = relationship(
+        "PostImage",
         back_populates="post",
         cascade="all, delete-orphan"
     )

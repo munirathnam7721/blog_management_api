@@ -23,11 +23,16 @@ from app.dependencies.auth import (
 )
 
 from app.models.post import Post
-
+from app.models.post_image import PostImage
 from app.models.user import User
 
 from app.schemas.post import (
     PostResponse
+)
+
+from app.services.subscription_service import (
+    check_post_limit,
+    get_active_subscription
 )
 
 
@@ -150,6 +155,7 @@ def get_all_posts(
 )
 def get_my_posts(
     db: Session = Depends(get_db),
+
     current_user: User = Depends(
         get_current_user
     )
@@ -177,6 +183,7 @@ def get_my_posts(
 )
 def get_post(
     post_id: int,
+
     db: Session = Depends(get_db)
 ):
 
@@ -199,7 +206,8 @@ def get_post(
 # ==========================================
 # CREATE POST
 # Authenticated
-# With Image Upload
+# Subscription Limit
+# Multiple Image Upload
 # ==========================================
 
 @router.post(
@@ -208,6 +216,7 @@ def get_post(
     status_code=status.HTTP_201_CREATED
 )
 async def create_post(
+
     title: str = Form(
         ...,
         min_length=3,
@@ -219,7 +228,7 @@ async def create_post(
         min_length=1
     ),
 
-    image: UploadFile | None = File(
+    images: list[UploadFile] | None = File(
         default=None
     ),
 
@@ -230,14 +239,87 @@ async def create_post(
     )
 ):
 
-    image_path = None
-
     # --------------------------------------
-    # IMAGE UPLOAD
+    # CHECK POST LIMIT
     # --------------------------------------
 
-    if image:
+    check_post_limit(
+        db=db,
+        user_id=current_user.id
+    )
 
+    # --------------------------------------
+    # GET ACTIVE SUBSCRIPTION
+    # --------------------------------------
+
+    active_subscription = get_active_subscription(
+        db=db,
+        user_id=current_user.id
+    )
+
+    if not active_subscription:
+
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "You need an active subscription "
+                "to continue."
+            )
+        )
+
+    subscription, plan = active_subscription
+
+    # --------------------------------------
+    # GET IMAGE LIMIT
+    # --------------------------------------
+
+    image_limit = plan.max_images_per_post
+
+    # --------------------------------------
+    # IMAGE LIST
+    # --------------------------------------
+
+    uploaded_images = images or []
+
+    # --------------------------------------
+    # CHECK IMAGE LIMIT
+    # --------------------------------------
+
+    if image_limit is not None:
+
+        if len(uploaded_images) > image_limit:
+
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "You've reached your plan limit. "
+                    "Kindly upgrade your plan to continue."
+                )
+            )
+
+    # --------------------------------------
+    # CREATE POST
+    # --------------------------------------
+
+    post = Post(
+        title=title,
+        content=content,
+        image=None,
+        author_id=current_user.id
+    )
+
+    db.add(post)
+
+    # Get generated post ID
+    db.flush()
+
+    # --------------------------------------
+    # UPLOAD IMAGES
+    # --------------------------------------
+
+    for image in uploaded_images:
+
+        # Check image type
         if image.content_type not in ALLOWED_IMAGE_TYPES:
 
             raise HTTPException(
@@ -248,21 +330,41 @@ async def create_post(
                 )
             )
 
+        # ----------------------------------
+        # GET EXTENSION
+        # ----------------------------------
+
         extension = ALLOWED_IMAGE_TYPES[
             image.content_type
         ]
+
+        # ----------------------------------
+        # GENERATE UNIQUE FILE NAME
+        # ----------------------------------
 
         filename = (
             f"{uuid.uuid4().hex}"
             f"{extension}"
         )
 
+        # ----------------------------------
+        # FILE PATH
+        # ----------------------------------
+
         file_path = os.path.join(
             UPLOAD_DIR,
             filename
         )
 
+        # ----------------------------------
+        # READ FILE
+        # ----------------------------------
+
         contents = await image.read()
+
+        # ----------------------------------
+        # SAVE FILE
+        # ----------------------------------
 
         with open(
             file_path,
@@ -271,22 +373,20 @@ async def create_post(
 
             file.write(contents)
 
-        image_path = (
-            f"/media/posts/{filename}"
+        # ----------------------------------
+        # SAVE IMAGE RECORD
+        # ----------------------------------
+
+        post_image = PostImage(
+            post_id=post.id,
+            image=f"/media/posts/{filename}"
         )
 
-    # --------------------------------------
-    # CREATE POST
-    # --------------------------------------
+        db.add(post_image)
 
-    post = Post(
-        title=title,
-        content=content,
-        image=image_path,
-        author_id=current_user.id
-    )
-
-    db.add(post)
+    # --------------------------------------
+    # SAVE EVERYTHING
+    # --------------------------------------
 
     db.commit()
 
@@ -297,8 +397,7 @@ async def create_post(
 
 # ==========================================
 # UPDATE POST
-# Owner only
-# With Optional Image
+# Owner Only
 # ==========================================
 
 @router.put(
@@ -306,6 +405,7 @@ async def create_post(
     response_model=PostResponse
 )
 async def update_post(
+
     post_id: int,
 
     title: str | None = Form(
@@ -319,7 +419,7 @@ async def update_post(
         min_length=1
     ),
 
-    image: UploadFile | None = File(
+    images: list[UploadFile] | None = File(
         default=None
     ),
 
@@ -329,6 +429,10 @@ async def update_post(
         get_current_user
     )
 ):
+
+    # --------------------------------------
+    # FIND POST
+    # --------------------------------------
 
     post = db.query(
         Post
@@ -374,62 +478,131 @@ async def update_post(
         post.content = content
 
     # --------------------------------------
-    # UPDATE IMAGE
+    # UPDATE IMAGES
     # --------------------------------------
 
-    if image:
+    uploaded_images = images or []
 
-        if image.content_type not in ALLOWED_IMAGE_TYPES:
+    if uploaded_images:
+
+        # ----------------------------------
+        # GET ACTIVE SUBSCRIPTION
+        # ----------------------------------
+
+        active_subscription = get_active_subscription(
+            db=db,
+            user_id=current_user.id
+        )
+
+        if not active_subscription:
 
             raise HTTPException(
-                status_code=400,
+                status_code=403,
                 detail=(
-                    "Only JPG, PNG and WEBP "
-                    "images are allowed"
+                    "You need an active subscription "
+                    "to continue."
                 )
             )
 
-        # Delete old image
+        subscription, plan = active_subscription
+
+        image_limit = plan.max_images_per_post
+
+        # ----------------------------------
+        # CHECK IMAGE LIMIT
+        # ----------------------------------
+
+        if image_limit is not None:
+
+            if len(uploaded_images) > image_limit:
+
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        "You've reached your plan limit. "
+                        "Kindly upgrade your plan to continue."
+                    )
+                )
+
+        # ----------------------------------
+        # DELETE EXISTING POST IMAGES
+        # ----------------------------------
+
+        existing_images = db.query(
+            PostImage
+        ).filter(
+            PostImage.post_id == post.id
+        ).all()
+
+        for old_image in existing_images:
+
+            old_file_path = old_image.image.lstrip("/")
+
+            if os.path.exists(old_file_path):
+
+                os.remove(old_file_path)
+
+            db.delete(old_image)
+
+        # ----------------------------------
+        # UPLOAD NEW IMAGES
+        # ----------------------------------
+
+        for image in uploaded_images:
+
+            if image.content_type not in ALLOWED_IMAGE_TYPES:
+
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Only JPG, PNG and WEBP "
+                        "images are allowed"
+                    )
+                )
+
+            extension = ALLOWED_IMAGE_TYPES[
+                image.content_type
+            ]
+
+            filename = (
+                f"{uuid.uuid4().hex}"
+                f"{extension}"
+            )
+
+            file_path = os.path.join(
+                UPLOAD_DIR,
+                filename
+            )
+
+            contents = await image.read()
+
+            with open(
+                file_path,
+                "wb"
+            ) as file:
+
+                file.write(contents)
+
+            post_image = PostImage(
+                post_id=post.id,
+                image=f"/media/posts/{filename}"
+            )
+
+            db.add(post_image)
+
+        # ----------------------------------
+        # REMOVE OLD SINGLE IMAGE
+        # ----------------------------------
+
         if post.image:
 
-            old_file_path = post.image.lstrip(
-                "/"
-            )
+            old_file_path = post.image.lstrip("/")
 
-            if os.path.exists(
-                old_file_path
-            ):
+            if os.path.exists(old_file_path):
 
-                os.remove(
-                    old_file_path
-                )
+                os.remove(old_file_path)
 
-        extension = ALLOWED_IMAGE_TYPES[
-            image.content_type
-        ]
-
-        filename = (
-            f"{uuid.uuid4().hex}"
-            f"{extension}"
-        )
-
-        file_path = os.path.join(
-            UPLOAD_DIR,
-            filename
-        )
-
-        contents = await image.read()
-
-        with open(
-            file_path,
-            "wb"
-        ) as file:
-
-            file.write(contents)
-
-        post.image = (
-            f"/media/posts/{filename}"
-        )
+            post.image = None
 
     # --------------------------------------
     # SAVE CHANGES
@@ -444,13 +617,14 @@ async def update_post(
 
 # ==========================================
 # DELETE POST
-# Owner only
+# Owner Only
 # ==========================================
 
 @router.delete(
     "/{post_id}"
 )
 def delete_post(
+
     post_id: int,
 
     db: Session = Depends(get_db),
@@ -459,6 +633,10 @@ def delete_post(
         get_current_user
     )
 ):
+
+    # --------------------------------------
+    # FIND POST
+    # --------------------------------------
 
     post = db.query(
         Post
@@ -488,22 +666,34 @@ def delete_post(
         )
 
     # --------------------------------------
-    # DELETE IMAGE
+    # DELETE OLD SINGLE IMAGE
     # --------------------------------------
 
     if post.image:
 
-        file_path = post.image.lstrip(
-            "/"
-        )
+        file_path = post.image.lstrip("/")
 
-        if os.path.exists(
-            file_path
-        ):
+        if os.path.exists(file_path):
 
-            os.remove(
-                file_path
-            )
+            os.remove(file_path)
+
+    # --------------------------------------
+    # DELETE MULTIPLE IMAGES
+    # --------------------------------------
+
+    post_images = db.query(
+        PostImage
+    ).filter(
+        PostImage.post_id == post.id
+    ).all()
+
+    for post_image in post_images:
+
+        file_path = post_image.image.lstrip("/")
+
+        if os.path.exists(file_path):
+
+            os.remove(file_path)
 
     # --------------------------------------
     # DELETE POST

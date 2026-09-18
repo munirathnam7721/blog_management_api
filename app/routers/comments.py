@@ -31,6 +31,10 @@ from app.services.email_service import (
     send_email
 )
 
+from app.services.subscription_service import (
+    check_comment_limit
+)
+
 
 router = APIRouter(
     prefix="/posts",
@@ -52,6 +56,10 @@ def get_comments(
     db: Session = Depends(get_db)
 ):
 
+    # ==========================================
+    # CHECK POST
+    # ==========================================
+
     post = db.query(
         Post
     ).filter(
@@ -64,6 +72,10 @@ def get_comments(
             status_code=404,
             detail="Post not found"
         )
+
+    # ==========================================
+    # GET COMMENTS
+    # ==========================================
 
     comments = db.query(
         Comment
@@ -96,7 +108,10 @@ def add_comment(
     )
 ):
 
-    # Check post
+    # ==========================================
+    # 1. CHECK POST
+    # ==========================================
+
     post = db.query(
         Post
     ).filter(
@@ -110,7 +125,19 @@ def add_comment(
             detail="Post not found"
         )
 
-    # Create comment
+    # ==========================================
+    # 2. CHECK COMMENT LIMIT
+    # ==========================================
+
+    check_comment_limit(
+        db=db,
+        user_id=current_user.id
+    )
+
+    # ==========================================
+    # 3. CREATE COMMENT
+    # ==========================================
+
     comment = Comment(
         post_id=post_id,
         user_id=current_user.id,
@@ -123,7 +150,10 @@ def add_comment(
 
     db.refresh(comment)
 
-    # Email post owner
+    # ==========================================
+    # 4. EMAIL POST OWNER
+    # ==========================================
+
     if post.author.email != current_user.email:
 
         email_body = (

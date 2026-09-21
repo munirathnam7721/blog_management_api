@@ -25,8 +25,8 @@ from app.schemas.like import (
     LikeResponse
 )
 
-from app.services.email_service import (
-    send_email
+from app.services.notification_service import (
+    send_post_activity_notification
 )
 
 from app.services.subscription_service import (
@@ -118,21 +118,22 @@ def like_post(
     # 5. SEND EMAIL NOTIFICATION
     # ==========================================
 
-    if post.author.email != current_user.email:
+    # Do not send an email if the user likes
+    # their own post.
 
-        email_body = (
-            f"Hello {post.author.username},\n\n"
-            f"{current_user.username} liked "
-            f"your blog post.\n\n"
-            f"Post: {post.title}"
-        )
+    if post.author_id != current_user.id:
 
         background_tasks.add_task(
-            send_email,
-            post.author.email,
-            "New Like on Your Blog Post",
-            email_body
+            send_post_activity_notification,
+            post_owner_email=post.author.email,
+            post_title=post.title,
+            actor_name=current_user.username,
+            activity_type="like"
         )
+
+    # ==========================================
+    # 6. RETURN RESPONSE
+    # ==========================================
 
     return {
         "message": "Post liked successfully",

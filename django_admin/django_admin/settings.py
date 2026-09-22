@@ -44,6 +44,7 @@ ALLOWED_HOSTS = []
 # ============================================================
 
 INSTALLED_APPS = [
+
     # Django built-in applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -52,8 +53,15 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Our subscription application
+    # Our applications
     "subscriptions",
+    "dashboard",
+
+    # Django Plotly Dash
+    "django_plotly_dash",
+    "channels",
+    "dpd_components",
+    "dpd_static_support",
 ]
 
 
@@ -62,12 +70,19 @@ INSTALLED_APPS = [
 # ============================================================
 
 MIDDLEWARE = [
+
     "django.middleware.security.SecurityMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
+
     "django.middleware.common.CommonMiddleware",
+
     "django.middleware.csrf.CsrfViewMiddleware",
+
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+
     "django.contrib.messages.middleware.MessageMiddleware",
+
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -84,15 +99,24 @@ ROOT_URLCONF = "django_admin.urls"
 # ============================================================
 
 TEMPLATES = [
+
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
+
         "DIRS": [],
+
         "APP_DIRS": True,
+
         "OPTIONS": {
+
             "context_processors": [
+
                 "django.template.context_processors.request",
+
                 "django.contrib.auth.context_processors.auth",
+
                 "django.contrib.messages.context_processors.messages",
+
             ],
         },
     },
@@ -107,31 +131,110 @@ WSGI_APPLICATION = "django_admin.wsgi.application"
 
 
 # ============================================================
+# ASGI
+# ============================================================
+
+ASGI_APPLICATION = "django_admin.asgi.application"
+
+
+# ============================================================
+# CHANNEL LAYERS
+# ============================================================
+
+CHANNEL_LAYERS = {
+
+    "default": {
+
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+
+    }
+
+}
+
+
+# ============================================================
+# DJANGO PLOTLY DASH
+# ============================================================
+
+X_FRAME_OPTIONS = "SAMEORIGIN"
+
+
+# ============================================================
+# PLOTLY COMPONENTS
+# ============================================================
+
+PLOTLY_COMPONENTS = [
+
+    "dpd_components",
+
+    "dpd_static_support",
+
+]
+
+
+# ============================================================
+# STATIC FILE FINDERS
+# ============================================================
+
+STATICFILES_FINDERS = [
+
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+
+    "django_plotly_dash.finders.DashAssetFinder",
+
+    "django_plotly_dash.finders.DashComponentFinder",
+
+    "django_plotly_dash.finders.DashAppDirectoryFinder",
+
+]
+
+
+# ============================================================
 # DATABASE
 # ============================================================
-# Existing MySQL database used by your FastAPI application.
+# Existing MySQL database used by FastAPI.
 #
 # Database:
 # blog_management_api
 #
 # MySQL:
-# localhost:3306
-#
-# User:
-# root
-#
-# Password:
-# muni
+# 127.0.0.1:3306
 
 DATABASES = {
+
     "default": {
+
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "blog_management_api",
-        "USER": "root",
-        "PASSWORD": "muni",
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
+
+        "NAME": os.getenv(
+            "MYSQL_DATABASE",
+            "blog_management_api"
+        ),
+
+        "USER": os.getenv(
+            "MYSQL_USER",
+            "root"
+        ),
+
+        "PASSWORD": os.getenv(
+            "MYSQL_PASSWORD",
+            ""
+        ),
+
+        "HOST": os.getenv(
+            "MYSQL_HOST",
+            "127.0.0.1"
+        ),
+
+        "PORT": os.getenv(
+            "MYSQL_PORT",
+            "3306"
+        ),
+
     }
+
 }
 
 
@@ -140,30 +243,31 @@ DATABASES = {
 # ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
+
     {
-        "NAME": (
+        "NAME":
             "django.contrib.auth.password_validation."
-            "UserAttributeSimilarityValidator"
-        ),
+            "UserAttributeSimilarityValidator",
     },
+
     {
-        "NAME": (
+        "NAME":
             "django.contrib.auth.password_validation."
-            "MinimumLengthValidator"
-        ),
+            "MinimumLengthValidator",
     },
+
     {
-        "NAME": (
+        "NAME":
             "django.contrib.auth.password_validation."
-            "CommonPasswordValidator"
-        ),
+            "CommonPasswordValidator",
     },
+
     {
-        "NAME": (
+        "NAME":
             "django.contrib.auth.password_validation."
-            "NumericPasswordValidator"
-        ),
+            "NumericPasswordValidator",
     },
+
 ]
 
 
@@ -190,11 +294,6 @@ STATIC_URL = "static/"
 # ============================================================
 # MEDIA FILES
 # ============================================================
-# Invoice PDFs will be stored in:
-# C:\blog_management_api\media\invoices\
-#
-# Post images are already stored in:
-# C:\blog_management_api\media\posts\
 
 MEDIA_URL = "/media/"
 
@@ -211,22 +310,42 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ============================================================
 # EMAIL CONFIGURATION
 # ============================================================
-# These values can later be used for subscription/invoice
-# email notifications.
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = (
+    "django.core.mail.backends.console.EmailBackend"
+)
 
-EMAIL_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 
-EMAIL_PORT = int(os.getenv("SMTP_PORT", "587"))
+EMAIL_HOST = os.getenv(
+    "SMTP_HOST",
+    "smtp.gmail.com"
+)
+
+
+EMAIL_PORT = int(
+    os.getenv(
+        "SMTP_PORT",
+        "587"
+    )
+)
+
 
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = os.getenv("SMTP_USERNAME", "")
 
-EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+EMAIL_HOST_USER = os.getenv(
+    "SMTP_USERNAME",
+    ""
+)
+
+
+EMAIL_HOST_PASSWORD = os.getenv(
+    "SMTP_PASSWORD",
+    ""
+)
+
 
 DEFAULT_FROM_EMAIL = os.getenv(
     "SMTP_FROM_EMAIL",
-    "noreply@example.com",
+    "noreply@example.com"
 )

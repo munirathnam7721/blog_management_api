@@ -1,22 +1,65 @@
-"""
-URL configuration for django_admin project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+
+from dashboard import dash_app
+
+from dashboard.views import (
+    home,
+    login_view,
+    dashboard_login
+)
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+
+    # ========================================================
+    # DJANGO ADMIN
+    # ========================================================
+
+    path(
+        "admin/",
+        admin.site.urls
+    ),
+
+    # ========================================================
+    # DJANGO PLOTLY DASH
+    # ========================================================
+
+    path(
+        "django_plotly_dash/",
+        include(
+            "django_plotly_dash.urls"
+        )
+    ),
+
+    # ========================================================
+    # LOGIN
+    # ========================================================
+
+    path(
+        "login/",
+        login_view,
+        name="login"
+    ),
+
+    # ========================================================
+    # OLD DASHBOARD LOGIN
+    # ========================================================
+
+    path(
+        "dashboard-login/",
+        dashboard_login,
+        name="dashboard_login"
+    ),
+
+    # ========================================================
+    # HOME PAGE
+    # ========================================================
+
+    path(
+        "",
+        home,
+        name="home"
+    ),
+
 ]

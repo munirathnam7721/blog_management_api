@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Blog Management System
+    </title>
+
+
+    <style>
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            background:
+                #f5f7fb;
+        }
+
+
+        .container {
+
+            max-width:
+                1000px;
+
+            margin:
+                80px auto;
+
+            text-align:
+                center;
+
+            padding:
+                40px;
+        }
+
+
+        h1 {
+
+            font-size:
+                40px;
+
+            margin-bottom:
+                10px;
+        }
+
+
+        .subtitle {
+
+            color:
+                #666;
+
+            font-size:
+                18px;
+
+            margin-bottom:
+                40px;
+        }
+
+
+        .cards {
+
+            display:
+                flex;
+
+            justify-content:
+                center;
+
+            gap:
+                30px;
+
+            flex-wrap:
+                wrap;
+        }
+
+
+        .card {
+
+            background:
+                white;
+
+            width:
+                300px;
+
+            padding:
+                30px;
+
+            border-radius:
+                12px;
+
+            box-shadow:
+                0 3px 15px
+                rgba(0, 0, 0, 0.1);
+        }
+
+
+        .card h2 {
+
+            margin-bottom:
+                15px;
+        }
+
+
+        .card p {
+
+            color:
+                #666;
+
+            line-height:
+                1.5;
+
+            min-height:
+                50px;
+        }
+
+
+        .button {
+
+            display:
+                inline-block;
+
+            padding:
+                12px 25px;
+
+            background:
+                #2563eb;
+
+            color:
+                white;
+
+            text-decoration:
+                none;
+
+            border-radius:
+                6px;
+
+            font-weight:
+                bold;
+
+            margin-top:
+                10px;
+        }
+
+
+        .button:hover {
+
+            opacity:
+                0.9;
+        }
+
+
+        .admin-button {
+
+            background:
+                #16a34a;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="container">
+
+
+        <h1>
+            Blog Management System
+        </h1>
+
+
+        <p class="subtitle">
+            Django Administration & Blog Analytics
+        </p>
+
+
+        <div class="cards">
+
+
+            <!-- ================================================= -->
+            <!-- USER DASHBOARD -->
+            <!-- ================================================= -->
+
+            <div class="card">
+
+                <h2>
+                    User Dashboard
+                </h2>
+
+
+                <p>
+                    Login to view your blog statistics,
+                    likes, comments and post activity.
+                </p>
+
+
+                <!-- IMPORTANT:
+                     This goes to Django login first.
+                -->
+
+                <a
+                    href="/login/"
+                    class="button"
+                >
+                    Login to Dashboard
+                </a>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- DJANGO ADMIN -->
+            <!-- ================================================= -->
+
+            <div class="card">
+
+                <h2>
+                    Django Admin
+                </h2>
+
+
+                <p>
+                    Manage users, subscriptions
+                    and administration features.
+                </p>
+
+
+                <a
+                    href="/admin/"
+                    class="button admin-button"
+                >
+                    Open Admin
+                </a>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</body>
+
+</html>

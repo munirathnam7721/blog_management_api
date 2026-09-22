@@ -33,6 +33,7 @@ from app.routers import (
     comments,
     likes,
     subscriptions,
+    dashboard,
 )
 
 
@@ -180,6 +181,7 @@ app.include_router(
 app.include_router(
     subscriptions.router
 )
+app.include_router(dashboard.router)
 
 
 # ==========================================

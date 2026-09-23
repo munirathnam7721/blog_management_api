@@ -1,719 +1,1539 @@
+import json
 import requests
 import plotly.graph_objects as go
 
-from datetime import datetime
-
-from dash import html, dcc
-from dash.dependencies import Input, Output
+from dash import (
+    html,
+    dcc,
+    Input,
+    Output,
+    State,
+    ALL,
+    no_update,
+)
 
 from django_plotly_dash import DjangoDash
 
 
-app = DjangoDash(
-    "UserDashboard"
-)
+app = DjangoDash("UserDashboard")
 
 
-# =========================================================
+# ============================================================
+# COMMON STYLES
+# ============================================================
+
+PAGE_STYLE = {
+    "backgroundColor": "#f5f7fb",
+    "minHeight": "100vh",
+    "padding": "20px",
+    "fontFamily": "Arial, sans-serif",
+}
+
+
+CARD_STYLE = {
+    "backgroundColor": "white",
+    "padding": "20px",
+    "borderRadius": "12px",
+    "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
+    "textAlign": "center",
+    "flex": "1",
+    "minWidth": "200px",
+}
+
+
+# ============================================================
+# HELPER FUNCTION
+# ============================================================
+
+def get_token(request):
+
+    if request is None:
+        return None
+
+    return request.session.get("fastapi_jwt")
+
+
+# ============================================================
 # DASHBOARD LAYOUT
-# =========================================================
+# ============================================================
 
 app.layout = html.Div(
-    [
+    style=PAGE_STYLE,
+    children=[
 
-        # =================================================
-        # MAIN CONTAINER
-        # =================================================
+        # ====================================================
+        # HEADER
+        # ====================================================
 
         html.Div(
-            [
+            style={
+                "display": "flex",
+                "justifyContent": "space-between",
+                "alignItems": "center",
+                "backgroundColor": "white",
+                "padding": "15px 25px",
+                "borderRadius": "12px",
+                "marginBottom": "20px",
+                "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
+                "position": "relative",
+            },
+            children=[
 
-                # =================================================
-                # HEADER
-                # =================================================
+                # --------------------------------------------
+                # DASHBOARD TITLE
+                # --------------------------------------------
 
                 html.Div(
-                    [
+                    children=[
 
-                        html.H1(
-                            "User Dashboard",
+                        html.H2(
+                            "Blog Dashboard",
                             style={
                                 "margin": "0",
-                                "fontSize": "32px",
-                                "fontWeight": "700"
-                            }
+                                "color": "#222",
+                            },
                         ),
 
                         html.P(
-                            "Blog Management Analytics",
+                            "Welcome to your dashboard",
                             style={
                                 "margin": "5px 0 0 0",
-                                "fontSize": "16px",
-                                "color": "#666"
-                            }
-                        )
-
-                    ],
-
-                    style={
-                        "marginBottom": "30px"
-                    }
+                                "color": "#777",
+                            },
+                        ),
+                    ]
                 ),
 
-
-                # =================================================
-                # AUTO REFRESH
-                # =================================================
-
-                dcc.Interval(
-                    id="dashboard-refresh",
-                    interval=60000,
-                    n_intervals=0
-                ),
-
-
-                # =================================================
-                # USER INFORMATION
-                # =================================================
+                # --------------------------------------------
+                # NOTIFICATION CENTER
+                # --------------------------------------------
 
                 html.Div(
-                    id="dashboard-user",
                     style={
-                        "marginBottom": "20px"
-                    }
-                ),
+                        "position": "relative",
+                    },
+                    children=[
 
+                        # ------------------------------------
+                        # BELL
+                        # ------------------------------------
 
-                # =================================================
-                # STATISTICS CARDS
-                # =================================================
-
-                html.Div(
-                    id="dashboard-data",
-
-                    style={
-                        "display": "grid",
-                        "gridTemplateColumns":
-                            "repeat(4, 1fr)",
-                        "gap": "20px",
-                        "marginBottom": "30px"
-                    }
-                ),
-
-
-                # =================================================
-                # LIKES & COMMENTS BAR CHART
-                # =================================================
-
-                html.Div(
-                    [
-
-                        dcc.Graph(
-                            id="likes-comments-chart",
+                        html.Button(
+                            "🔔",
+                            id="notification-bell",
+                            n_clicks=0,
                             style={
-                                "width": "100%"
-                            }
-                        )
+                                "fontSize": "28px",
+                                "border": "none",
+                                "background": "transparent",
+                                "cursor": "pointer",
+                                "position": "relative",
+                            },
+                        ),
 
-                    ],
+                        # ------------------------------------
+                        # UNREAD BADGE
+                        # ------------------------------------
 
-                    style={
-                        "backgroundColor": "white",
-                        "borderRadius": "12px",
-                        "padding": "20px",
-                        "boxShadow":
-                            "0 2px 10px rgba(0,0,0,0.08)",
-                        "marginBottom": "30px"
-                    }
-                ),
-
-
-                # =================================================
-                # POST ACTIVITY LINE CHART
-                # =================================================
-
-                html.Div(
-                    [
-
-                        dcc.Graph(
-                            id="post-activity-chart",
+                        html.Span(
+                            "0",
+                            id="notification-badge",
                             style={
-                                "width": "100%"
-                            }
-                        )
+                                "position": "absolute",
+                                "top": "-2px",
+                                "right": "-2px",
+                                "backgroundColor": "red",
+                                "color": "white",
+                                "borderRadius": "50%",
+                                "minWidth": "20px",
+                                "height": "20px",
+                                "fontSize": "12px",
+                                "fontWeight": "bold",
+                                "display": "none",
+                                "alignItems": "center",
+                                "justifyContent": "center",
+                                "textAlign": "center",
+                                "lineHeight": "20px",
+                            },
+                        ),
 
+                        # ------------------------------------
+                        # DROPDOWN
+                        # ------------------------------------
+
+                        html.Div(
+                            id="notification-dropdown",
+                            style={
+                                "display": "none",
+                                "position": "absolute",
+                                "right": "0",
+                                "top": "45px",
+                                "width": "380px",
+                                "maxHeight": "500px",
+                                "overflowY": "auto",
+                                "backgroundColor": "white",
+                                "borderRadius": "12px",
+                                "boxShadow": "0 5px 20px rgba(0,0,0,0.15)",
+                                "zIndex": "9999",
+                                "border": "1px solid #eee",
+                            },
+                            children=[
+
+                                # ============================
+                                # DROPDOWN HEADER
+                                # ============================
+
+                                html.Div(
+                                    style={
+                                        "padding": "15px",
+                                        "borderBottom": "1px solid #eee",
+                                        "display": "flex",
+                                        "justifyContent": "space-between",
+                                        "alignItems": "center",
+                                    },
+                                    children=[
+
+                                        html.Strong(
+                                            "Notifications",
+                                            style={
+                                                "fontSize": "18px",
+                                            },
+                                        ),
+
+                                        html.Button(
+                                            "Mark all as read",
+                                            id="mark-all-read",
+                                            n_clicks=0,
+                                            style={
+                                                "border": "none",
+                                                "background": "transparent",
+                                                "color": "#007bff",
+                                                "cursor": "pointer",
+                                                "fontSize": "12px",
+                                            },
+                                        ),
+                                    ],
+                                ),
+
+                                # ============================
+                                # NOTIFICATION CONTENT
+                                # ============================
+
+                                html.Div(
+                                    id="notification-content",
+                                    children=[],
+                                ),
+                            ],
+                        ),
                     ],
-
-                    style={
-                        "backgroundColor": "white",
-                        "borderRadius": "12px",
-                        "padding": "20px",
-                        "boxShadow":
-                            "0 2px 10px rgba(0,0,0,0.08)",
-                        "marginBottom": "30px"
-                    }
                 ),
-
             ],
+        ),
 
+        # ====================================================
+        # DASHBOARD REFRESH
+        # ====================================================
+
+        dcc.Interval(
+            id="dashboard-refresh",
+            interval=10000,
+            n_intervals=0,
+        ),
+
+        # ====================================================
+        # NOTIFICATION REFRESH
+        # ====================================================
+
+        dcc.Interval(
+            id="notification-refresh",
+            interval=10000,
+            n_intervals=0,
+        ),
+
+        # ====================================================
+        # ACTION STORE
+        # ====================================================
+
+        dcc.Store(
+            id="notification-action-store",
+            data=0,
+        ),
+
+        # ====================================================
+        # USER SECTION
+        # ====================================================
+
+        html.Div(
+            id="user-section",
             style={
-                "maxWidth": "1200px",
-                "margin": "0 auto",
-                "padding": "30px",
-                "fontFamily":
-                    "Arial, sans-serif",
-                "backgroundColor":
-                    "#f5f7fb",
-                "minHeight": "100vh"
-            }
-        )
+                "backgroundColor": "white",
+                "padding": "20px",
+                "borderRadius": "12px",
+                "marginBottom": "20px",
+                "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
+            },
+        ),
 
-    ]
+        # ====================================================
+        # STATISTICS
+        # ====================================================
+
+        html.Div(
+            style={
+                "display": "flex",
+                "gap": "20px",
+                "flexWrap": "wrap",
+                "marginBottom": "25px",
+            },
+            children=[
+
+                # --------------------------------------------
+                # TOTAL POSTS
+                # --------------------------------------------
+
+                html.Div(
+                    children=[
+
+                        html.H4("Total Posts"),
+
+                        html.H2(
+                            id="total-posts",
+                            children="0",
+                        ),
+                    ],
+                    style=CARD_STYLE,
+                ),
+
+                # --------------------------------------------
+                # TOTAL COMMENTS
+                # --------------------------------------------
+
+                html.Div(
+                    children=[
+
+                        html.H4("Total Comments"),
+
+                        html.H2(
+                            id="total-comments",
+                            children="0",
+                        ),
+                    ],
+                    style=CARD_STYLE,
+                ),
+
+                # --------------------------------------------
+                # TOTAL LIKES
+                # --------------------------------------------
+
+                html.Div(
+                    children=[
+
+                        html.H4("Likes Received"),
+
+                        html.H2(
+                            id="total-likes",
+                            children="0",
+                        ),
+                    ],
+                    style=CARD_STYLE,
+                ),
+
+                # --------------------------------------------
+                # TOTAL VIEWS
+                # --------------------------------------------
+
+                html.Div(
+                    children=[
+
+                        html.H4("Total Views"),
+
+                        html.H2(
+                            id="total-views",
+                            children="0",
+                        ),
+                    ],
+                    style=CARD_STYLE,
+                ),
+            ],
+        ),
+
+        # ====================================================
+        # CHARTS
+        # ====================================================
+
+        html.Div(
+            style={
+                "display": "flex",
+                "gap": "20px",
+                "flexWrap": "wrap",
+            },
+            children=[
+
+                # --------------------------------------------
+                # LIKES / COMMENTS
+                # --------------------------------------------
+
+                html.Div(
+                    style={
+                        "backgroundColor": "white",
+                        "padding": "20px",
+                        "borderRadius": "12px",
+                        "flex": "1",
+                        "minWidth": "400px",
+                        "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
+                    },
+                    children=[
+
+                        html.H3(
+                            "Likes and Comments"
+                        ),
+
+                        dcc.Graph(
+                            id="likes-comments-chart"
+                        ),
+                    ],
+                ),
+
+                # --------------------------------------------
+                # POST ACTIVITY
+                # --------------------------------------------
+
+                html.Div(
+                    style={
+                        "backgroundColor": "white",
+                        "padding": "20px",
+                        "borderRadius": "12px",
+                        "flex": "1",
+                        "minWidth": "400px",
+                        "boxShadow": "0 2px 8px rgba(0,0,0,0.08)",
+                    },
+                    children=[
+
+                        html.H3(
+                            "Post Activity"
+                        ),
+
+                        dcc.Graph(
+                            id="post-activity-chart"
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    ],
 )
 
 
-# =========================================================
+# ============================================================
 # DASHBOARD CALLBACK
-# =========================================================
+# ============================================================
 
 @app.expanded_callback(
     [
+        Output(
+            "user-section",
+            "children",
+        ),
 
         Output(
-            "dashboard-data",
-            "children"
+            "total-posts",
+            "children",
+        ),
+
+        Output(
+            "total-comments",
+            "children",
+        ),
+
+        Output(
+            "total-likes",
+            "children",
+        ),
+
+        Output(
+            "total-views",
+            "children",
         ),
 
         Output(
             "likes-comments-chart",
-            "figure"
+            "figure",
         ),
 
         Output(
             "post-activity-chart",
-            "figure"
+            "figure",
         ),
-
-        Output(
-            "dashboard-user",
-            "children"
-        ),
-
     ],
-
     [
-
         Input(
             "dashboard-refresh",
-            "n_intervals"
-        )
-
-    ]
+            "n_intervals",
+        ),
+    ],
 )
-def load_dashboard_data(
+def update_dashboard(
     n_intervals,
-    request=None
+    request=None,
 ):
 
-    # =====================================================
-    # GET JWT FROM DJANGO SESSION
-    # =====================================================
+    empty_figure = go.Figure()
 
-    token = request.session.get(
-        "fastapi_jwt"
+    empty_figure.update_layout(
+        template="plotly_white"
     )
+
+    token = get_token(request)
 
     if not token:
 
         return (
-            html.P(
-                "JWT token not found in Django session."
+            html.Div(
+                "Please login to view dashboard.",
+                style={
+                    "color": "red",
+                    "fontWeight": "bold",
+                },
             ),
-            {},
-            {},
-            ""
+            "0",
+            "0",
+            "0",
+            "0",
+            empty_figure,
+            empty_figure,
         )
 
-
-    # =====================================================
-    # CALL FASTAPI DASHBOARD API
-    # =====================================================
+    # ========================================================
+    # GET DASHBOARD API
+    # ========================================================
 
     try:
 
         response = requests.get(
             "http://127.0.0.1:8000/dashboard",
-
             headers={
-                "Authorization":
-                    f"Bearer {token}"
+                "Authorization": f"Bearer {token}",
             },
-
-            timeout=10
+            timeout=10,
         )
 
-    except requests.RequestException as error:
+    except requests.RequestException:
 
         return (
-            html.P(
-                f"Could not connect to FastAPI: {error}"
+            html.Div(
+                "Unable to connect to FastAPI.",
+                style={
+                    "color": "red",
+                    "fontWeight": "bold",
+                },
             ),
-            {},
-            {},
-            ""
+            "0",
+            "0",
+            "0",
+            "0",
+            empty_figure,
+            empty_figure,
         )
-
-
-    # =====================================================
-    # CHECK API RESPONSE
-    # =====================================================
 
     if response.status_code != 200:
 
         return (
             html.Div(
-                [
-
-                    html.P(
-                        f"FastAPI returned status "
-                        f"{response.status_code}"
-                    ),
-
-                    html.Pre(
-                        response.text
-                    )
-
-                ]
+                "Unable to load dashboard data.",
+                style={
+                    "color": "red",
+                    "fontWeight": "bold",
+                },
             ),
-            {},
-            {},
-            ""
+            "0",
+            "0",
+            "0",
+            "0",
+            empty_figure,
+            empty_figure,
         )
-
-
-    # =====================================================
-    # READ API DATA
-    # =====================================================
 
     data = response.json()
 
-    statistics = data["statistics"]
+    # ========================================================
+    # DATA
+    # ========================================================
 
-    post_analytics = data["post_analytics"]
+    user = data.get(
+        "user",
+        {},
+    )
 
+    statistics = data.get(
+        "statistics",
+        {},
+    )
 
-    # =====================================================
-    # USER INFORMATION
-    # =====================================================
+    post_analytics = data.get(
+        "post_analytics",
+        [],
+    )
 
-    username = data["user"]["username"]
-
+    # ========================================================
+    # USER
+    # ========================================================
 
     user_section = html.Div(
-        [
+        children=[
 
-            html.H2(
-                f"Welcome, {username}",
-
-                style={
-                    "margin": "0",
-                    "fontSize": "24px"
-                }
+            html.H3(
+                f"Welcome, {user.get('username', '')}"
             ),
 
             html.P(
-                "Here is your blog performance overview.",
+                f"Email: {user.get('email', '')}"
+            ),
 
-                style={
-                    "marginTop": "5px",
-                    "color": "#666"
-                }
-            )
-
-        ]
+            html.P(
+                f"User ID: {user.get('id', '')}"
+            ),
+        ],
     )
 
+    # ========================================================
+    # STATISTICS
+    # ========================================================
 
-    # =====================================================
-    # STATISTIC CARD STYLE
-    # =====================================================
+    total_posts = statistics.get(
+        "total_posts",
+        0,
+    )
 
-    card_style = {
+    total_comments = statistics.get(
+        "total_comments",
+        0,
+    )
 
-        "backgroundColor": "white",
+    total_likes = statistics.get(
+        "total_likes_received",
+        0,
+    )
 
-        "borderRadius": "12px",
+    total_views = statistics.get(
+        "total_views",
+        0,
+    )
 
-        "padding": "20px",
+    # ========================================================
+    # POST DATA
+    # ========================================================
 
-        "boxShadow":
-            "0 2px 10px rgba(0,0,0,0.08)",
-
-        "textAlign": "center",
-
-        "minHeight": "110px",
-
-        "display": "flex",
-
-        "flexDirection": "column",
-
-        "justifyContent": "center"
-
-    }
-
-
-    # =====================================================
-    # STATISTICS CARDS
-    # =====================================================
-
-    dashboard_cards = [
-
-        # -----------------------------------------------
-        # TOTAL POSTS
-        # -----------------------------------------------
-
-        html.Div(
-            [
-
-                html.P(
-                    "Total Posts",
-
-                    style={
-                        "margin": "0",
-                        "fontSize": "15px",
-                        "color": "#666"
-                    }
-                ),
-
-                html.H2(
-                    statistics["total_posts"],
-
-                    style={
-                        "margin": "10px 0 0 0",
-                        "fontSize": "32px"
-                    }
-                )
-
-            ],
-
-            style=card_style
-        ),
-
-
-        # -----------------------------------------------
-        # COMMENTS
-        # -----------------------------------------------
-
-        html.Div(
-            [
-
-                html.P(
-                    "Comments Made",
-
-                    style={
-                        "margin": "0",
-                        "fontSize": "15px",
-                        "color": "#666"
-                    }
-                ),
-
-                html.H2(
-                    statistics["total_comments"],
-
-                    style={
-                        "margin": "10px 0 0 0",
-                        "fontSize": "32px"
-                    }
-                )
-
-            ],
-
-            style=card_style
-        ),
-
-
-        # -----------------------------------------------
-        # LIKES
-        # -----------------------------------------------
-
-        html.Div(
-            [
-
-                html.P(
-                    "Likes Received",
-
-                    style={
-                        "margin": "0",
-                        "fontSize": "15px",
-                        "color": "#666"
-                    }
-                ),
-
-                html.H2(
-                    statistics["total_likes_received"],
-
-                    style={
-                        "margin": "10px 0 0 0",
-                        "fontSize": "32px"
-                    }
-                )
-
-            ],
-
-            style=card_style
-        ),
-
-
-        # -----------------------------------------------
-        # VIEWS
-        # -----------------------------------------------
-
-        html.Div(
-            [
-
-                html.P(
-                    "Total Views",
-
-                    style={
-                        "margin": "0",
-                        "fontSize": "15px",
-                        "color": "#666"
-                    }
-                ),
-
-                html.H2(
-                    statistics["total_views"],
-
-                    style={
-                        "margin": "10px 0 0 0",
-                        "fontSize": "32px"
-                    }
-                )
-
-            ],
-
-            style=card_style
+    titles = [
+        post.get(
+            "post_title",
+            "",
         )
-
-    ]
-
-
-    # =====================================================
-    # PREPARE BAR CHART DATA
-    # =====================================================
-
-    post_titles = [
-
-        post["post_title"]
-
         for post in post_analytics
-
     ]
-
 
     likes = [
-
-        post["likes"]
-
+        post.get(
+            "likes",
+            0,
+        )
         for post in post_analytics
-
     ]
-
 
     comments = [
-
-        post["comments"]
-
+        post.get(
+            "comments",
+            0,
+        )
         for post in post_analytics
-
     ]
 
+    dates = [
+        post.get(
+            "created_at",
+        )
+        for post in post_analytics
+    ]
 
-    # =====================================================
-    # LIKES & COMMENTS BAR CHART
-    # =====================================================
+    post_counts = [
+        1
+        for _ in post_analytics
+    ]
 
-    bar_figure = go.Figure()
+    # ========================================================
+    # LIKES / COMMENTS CHART
+    # ========================================================
 
+    likes_comments_figure = go.Figure()
 
-    bar_figure.add_trace(
+    likes_comments_figure.add_trace(
         go.Bar(
-            x=post_titles,
+            x=titles,
             y=likes,
-            name="Likes"
+            name="Likes",
         )
     )
 
-
-    bar_figure.add_trace(
+    likes_comments_figure.add_trace(
         go.Bar(
-            x=post_titles,
+            x=titles,
             y=comments,
-            name="Comments"
+            name="Comments",
         )
     )
 
-
-    bar_figure.update_layout(
-
+    likes_comments_figure.update_layout(
         barmode="group",
-
-        title={
-            "text":
-                "Likes & Comments Per Post",
-            "x": 0.5
-        },
-
-        xaxis_title="Post",
-
+        template="plotly_white",
+        xaxis_title="Posts",
         yaxis_title="Count",
+    )
 
-        legend_title="Engagement",
+    # ========================================================
+    # POST ACTIVITY CHART
+    # ========================================================
 
-        height=450,
+    post_activity_figure = go.Figure()
 
-        margin={
-            "l": 50,
-            "r": 30,
-            "t": 80,
-            "b": 80
-        },
+    if dates:
 
-        plot_bgcolor="white",
+        post_activity_figure.add_trace(
+            go.Scatter(
+                x=dates,
+                y=post_counts,
+                mode="lines+markers",
+                name="Posts",
+            )
+        )
 
-        paper_bgcolor="white"
+    post_activity_figure.update_layout(
+        template="plotly_white",
+        xaxis_title="Date",
+        yaxis_title="Posts",
+    )
 
+    return (
+        user_section,
+        str(total_posts),
+        str(total_comments),
+        str(total_likes),
+        str(total_views),
+        likes_comments_figure,
+        post_activity_figure,
     )
 
 
-    # =====================================================
-    # PREPARE POST ACTIVITY DATA
-    # =====================================================
+# ============================================================
+# NOTIFICATION CENTER
+# ============================================================
 
-    activity_dates = []
+@app.expanded_callback(
+    [
+        Output(
+            "notification-content",
+            "children",
+        ),
 
-    activity_counts = []
+        Output(
+            "notification-badge",
+            "children",
+        ),
 
+        Output(
+            "notification-badge",
+            "style",
+        ),
 
-    for post in post_analytics:
+        Output(
+            "notification-dropdown",
+            "style",
+        ),
+    ],
+    [
+        Input(
+            "notification-refresh",
+            "n_intervals",
+        ),
 
-        created_at = post["created_at"]
+        Input(
+            "notification-bell",
+            "n_clicks",
+        ),
 
-        # Convert API date string to datetime
-        if created_at:
+        Input(
+            "notification-action-store",
+            "data",
+        ),
+    ],
+    [
+        State(
+            "notification-dropdown",
+            "style",
+        ),
+    ],
+)
+def load_notifications(
+    n_intervals,
+    bell_clicks,
+    action_refresh,
+    current_dropdown_style,
+    request=None,
+    callback_context=None,
+):
 
-            try:
+    # ========================================================
+    # DEFAULT DROPDOWN STYLE
+    # ========================================================
 
-                created_date = datetime.fromisoformat(
-                    created_at
+    if not current_dropdown_style:
+
+        current_dropdown_style = {
+            "display": "none",
+            "position": "absolute",
+            "right": "0",
+            "top": "45px",
+            "width": "380px",
+            "maxHeight": "500px",
+            "overflowY": "auto",
+            "backgroundColor": "white",
+            "borderRadius": "12px",
+            "boxShadow": "0 5px 20px rgba(0,0,0,0.15)",
+            "zIndex": "9999",
+            "border": "1px solid #eee",
+        }
+
+    dropdown_style = {
+        **current_dropdown_style
+    }
+
+    # ========================================================
+    # HANDLE BELL CLICK
+    #
+    # IMPORTANT:
+    # django-plotly-dash uses:
+    #
+    # callback_context.triggered
+    #
+    # NOT:
+    #
+    # callback_context.triggered_id
+    # ========================================================
+
+    if callback_context is not None:
+
+        triggered = None
+
+        if callback_context.triggered:
+
+            prop_id = (
+                callback_context.triggered[0]
+                .get(
+                    "prop_id",
+                    "",
+                )
+            )
+
+            if prop_id:
+
+                triggered = (
+                    prop_id
+                    .split(".")[0]
                 )
 
-                activity_dates.append(
-                    created_date
+        if triggered == "notification-bell":
+
+            current_display = (
+                current_dropdown_style.get(
+                    "display",
+                    "none",
                 )
+            )
 
-                activity_counts.append(
-                    1
-                )
+            if current_display == "none":
 
-            except ValueError:
+                dropdown_style["display"] = "block"
 
-                continue
+            else:
 
+                dropdown_style["display"] = "none"
 
-    # =====================================================
-    # SORT POST ACTIVITY BY DATE
-    # =====================================================
+    # ========================================================
+    # GET TOKEN
+    # ========================================================
 
-    activity_data = sorted(
-        zip(
-            activity_dates,
-            activity_counts
+    token = get_token(request)
+
+    if not token:
+
+        return (
+            html.Div(
+                "Please login to view notifications.",
+                style={
+                    "padding": "20px",
+                    "color": "#777",
+                    "textAlign": "center",
+                },
+            ),
+            "0",
+            {
+                "display": "none",
+            },
+            dropdown_style,
+        )
+
+    # ========================================================
+    # GET NOTIFICATIONS
+    # ========================================================
+
+    try:
+
+        response = requests.get(
+            "http://127.0.0.1:8000/notifications",
+            headers={
+                "Authorization": f"Bearer {token}",
+            },
+            timeout=10,
+        )
+
+    except requests.RequestException:
+
+        return (
+            html.Div(
+                "Unable to load notifications.",
+                style={
+                    "padding": "20px",
+                    "color": "red",
+                    "textAlign": "center",
+                },
+            ),
+            "0",
+            {
+                "display": "none",
+            },
+            dropdown_style,
+        )
+
+    if response.status_code != 200:
+
+        return (
+            html.Div(
+                "Unable to load notifications.",
+                style={
+                    "padding": "20px",
+                    "color": "red",
+                    "textAlign": "center",
+                },
+            ),
+            "0",
+            {
+                "display": "none",
+            },
+            dropdown_style,
+        )
+
+    notifications = response.json()
+
+    # ========================================================
+    # UNREAD COUNT
+    # ========================================================
+
+    unread_count = sum(
+        1
+        for notification in notifications
+        if not notification.get(
+            "is_read",
+            False,
         )
     )
 
+    # ========================================================
+    # BADGE
+    # ========================================================
 
-    if activity_data:
+    if unread_count > 0:
 
-        activity_dates = [
-            item[0]
-            for item in activity_data
-        ]
-
-        activity_counts = [
-            item[1]
-            for item in activity_data
-        ]
+        badge_style = {
+            "position": "absolute",
+            "top": "-2px",
+            "right": "-2px",
+            "backgroundColor": "red",
+            "color": "white",
+            "borderRadius": "50%",
+            "minWidth": "20px",
+            "height": "20px",
+            "fontSize": "12px",
+            "fontWeight": "bold",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "textAlign": "center",
+            "lineHeight": "20px",
+        }
 
     else:
 
-        activity_dates = []
+        badge_style = {
+            "display": "none",
+        }
 
-        activity_counts = []
+    # ========================================================
+    # NO NOTIFICATIONS
+    # ========================================================
+
+    if not notifications:
+
+        notification_items = html.Div(
+            "No notifications",
+            style={
+                "padding": "25px",
+                "textAlign": "center",
+                "color": "#777",
+            },
+        )
+
+        return (
+            notification_items,
+            "0",
+            badge_style,
+            dropdown_style,
+        )
+
+    # ========================================================
+    # ONLY SHOW 10 RECENT
+    # ========================================================
+
+    notifications = notifications[:10]
+
+    notification_items = []
+
+    # ========================================================
+    # CREATE NOTIFICATION ITEMS
+    # ========================================================
+
+    for notification in notifications:
+
+        notification_id = notification.get(
+            "id"
+        )
+
+        message = notification.get(
+            "message",
+            "",
+        )
+
+        notification_type = notification.get(
+            "notification_type",
+            "",
+        )
+
+        is_read = notification.get(
+            "is_read",
+            False,
+        )
+
+        created_at = notification.get(
+            "created_at",
+            "",
+        )
+
+        # ====================================================
+        # ICON
+        # ====================================================
+
+        if notification_type == "like":
+
+            icon = "❤️"
+
+        elif notification_type == "comment":
+
+            icon = "💬"
+
+        elif notification_type == "subscription":
+
+            icon = "⭐"
+
+        elif notification_type == "subscription_renewal":
+
+            icon = "🔄"
+
+        else:
+
+            icon = "🔔"
+
+        # ====================================================
+        # UNREAD STYLE
+        # ====================================================
+
+        if is_read:
+
+            background_color = "#ffffff"
+
+            font_weight = "normal"
+
+        else:
+
+            background_color = "#eef5ff"
+
+            font_weight = "bold"
+
+        # ====================================================
+        # BUTTON TEXT
+        # ====================================================
+
+        if is_read:
+
+            status_text = "Mark as unread"
+
+        else:
+
+            status_text = "Mark as read"
+
+        # ====================================================
+        # NOTIFICATION ITEM
+        # ====================================================
+
+        notification_items.append(
+
+            html.Div(
+                style={
+                    "padding": "12px",
+                    "borderBottom": "1px solid #eee",
+                    "backgroundColor": background_color,
+                },
+
+                children=[
+
+                    html.Div(
+                        style={
+                            "display": "flex",
+                            "gap": "10px",
+                            "alignItems": "flex-start",
+                        },
+
+                        children=[
+
+                            # --------------------------------
+                            # ICON
+                            # --------------------------------
+
+                            html.Div(
+                                icon,
+                                style={
+                                    "fontSize": "22px",
+                                    "width": "30px",
+                                },
+                            ),
+
+                            # --------------------------------
+                            # CONTENT
+                            # --------------------------------
+
+                            html.Div(
+                                style={
+                                    "flex": "1",
+                                },
+
+                                children=[
+
+                                    # MESSAGE
+                                    html.Div(
+                                        message,
+                                        style={
+                                            "fontWeight": font_weight,
+                                            "fontSize": "14px",
+                                            "color": "#222",
+                                            "marginBottom": "5px",
+                                        },
+                                    ),
+
+                                    # TIMESTAMP
+                                    html.Div(
+                                        created_at,
+                                        style={
+                                            "fontSize": "11px",
+                                            "color": "#888",
+                                            "marginBottom": "7px",
+                                        },
+                                    ),
+
+                                    # --------------------------------
+                                    # READ / UNREAD BUTTON
+                                    #
+                                    # IMPORTANT:
+                                    # We use n_clicks_timestamp
+                                    # instead of n_clicks.
+                                    # --------------------------------
+
+                                    html.Button(
+                                        status_text,
+
+                                        id={
+                                            "type":
+                                                "notification-action",
+
+                                            "notification_id":
+                                                notification_id,
+                                        },
+
+                                        n_clicks=0,
+
+                                        n_clicks_timestamp=None,
+
+                                        style={
+                                            "border": "none",
+                                            "background": "transparent",
+                                            "padding": "0",
+                                            "color": "#007bff",
+                                            "cursor": "pointer",
+                                            "fontSize": "11px",
+                                        },
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            )
+        )
+
+    return (
+        notification_items,
+        str(unread_count),
+        badge_style,
+        dropdown_style,
+    )
 
 
-    # =====================================================
-    # POST ACTIVITY LINE CHART
-    # =====================================================
+# ============================================================
+# INDIVIDUAL NOTIFICATION READ / UNREAD
+#
+# IMPORTANT FIX:
+# Use n_clicks_timestamp instead of n_clicks.
+#
+# This prevents automatic dashboard refreshes from being
+# interpreted as user clicks.
+# ============================================================
 
-    activity_figure = go.Figure()
+@app.expanded_callback(
+    Output(
+        "notification-action-store",
+        "data",
+    ),
 
+    [
+        Input(
+            {
+                "type": "notification-action",
+                "notification_id": ALL,
+            },
+            "n_clicks_timestamp",
+        ),
+    ],
 
-    activity_figure.add_trace(
-        go.Scatter(
+    State(
+        "notification-action-store",
+        "data",
+    ),
 
-            x=activity_dates,
+    prevent_initial_call=True,
+)
+def change_notification_status(
+    n_clicks_timestamp,
+    current_value,
+    request=None,
+    callback_context=None,
+):
 
-            y=activity_counts,
+    # ========================================================
+    # NO TIMESTAMP = NO REAL CLICK
+    # ========================================================
 
-            mode="lines+markers",
+    if not n_clicks_timestamp:
 
-            name="Posts Created"
+        return no_update
 
+    # ========================================================
+    # MAKE SURE AT LEAST ONE BUTTON WAS ACTUALLY CLICKED
+    # ========================================================
+
+    valid_timestamps = [
+        timestamp
+        for timestamp in n_clicks_timestamp
+        if timestamp is not None
+        and timestamp > 0
+    ]
+
+    if not valid_timestamps:
+
+        return no_update
+
+    # ========================================================
+    # CALLBACK CONTEXT
+    # ========================================================
+
+    if callback_context is None:
+
+        return no_update
+
+    if not callback_context.triggered:
+
+        return no_update
+
+    # ========================================================
+    # GET TRIGGERED PROPERTY
+    # ========================================================
+
+    prop_id = (
+        callback_context.triggered[0]
+        .get(
+            "prop_id",
+            "",
         )
     )
 
+    if not prop_id:
 
-    activity_figure.update_layout(
+        return no_update
 
-        title={
-            "text":
-                "Post Activity Over Time",
-            "x": 0.5
-        },
+    # ========================================================
+    # EXTRACT JSON ID
+    #
+    # Example:
+    #
+    # {"notification_id":5,"type":"notification-action"}.n_clicks_timestamp
+    # ========================================================
 
-        xaxis_title="Date",
-
-        yaxis_title="Posts Created",
-
-        height=450,
-
-        margin={
-            "l": 50,
-            "r": 30,
-            "t": 80,
-            "b": 80
-        },
-
-        plot_bgcolor="white",
-
-        paper_bgcolor="white"
-
+    triggered_id_string = (
+        prop_id.rsplit(
+            ".",
+            1,
+        )[0]
     )
 
+    try:
 
-    # =====================================================
-    # RETURN ALL DASHBOARD DATA
-    # =====================================================
+        triggered = json.loads(
+            triggered_id_string
+        )
 
-    return (
+    except (
+        json.JSONDecodeError,
+        TypeError,
+        ValueError,
+    ):
 
-        dashboard_cards,
+        return no_update
 
-        bar_figure,
+    # ========================================================
+    # CHECK DICTIONARY
+    # ========================================================
 
-        activity_figure,
+    if not isinstance(
+        triggered,
+        dict,
+    ):
 
-        user_section
+        return no_update
 
+    # ========================================================
+    # GET NOTIFICATION ID
+    # ========================================================
+
+    notification_id = triggered.get(
+        "notification_id"
     )
+
+    if not notification_id:
+
+        return no_update
+
+    # ========================================================
+    # GET TOKEN
+    # ========================================================
+
+    token = get_token(request)
+
+    if not token:
+
+        return no_update
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+    }
+
+    # ========================================================
+    # GET CURRENT NOTIFICATIONS
+    # ========================================================
+
+    try:
+
+        response = requests.get(
+            "http://127.0.0.1:8000/notifications",
+            headers=headers,
+            timeout=10,
+        )
+
+    except requests.RequestException:
+
+        return no_update
+
+    if response.status_code != 200:
+
+        return no_update
+
+    notifications = response.json()
+
+    # ========================================================
+    # FIND SELECTED NOTIFICATION
+    # ========================================================
+
+    selected_notification = None
+
+    for notification in notifications:
+
+        if notification.get(
+            "id"
+        ) == notification_id:
+
+            selected_notification = notification
+
+            break
+
+    if selected_notification is None:
+
+        return no_update
+
+    # ========================================================
+    # DETERMINE READ / UNREAD
+    # ========================================================
+
+    if selected_notification.get(
+        "is_read",
+        False,
+    ):
+
+        endpoint = (
+            "http://127.0.0.1:8000/"
+            f"notifications/"
+            f"{notification_id}/unread"
+        )
+
+    else:
+
+        endpoint = (
+            "http://127.0.0.1:8000/"
+            f"notifications/"
+            f"{notification_id}/read"
+        )
+
+    # ========================================================
+    # UPDATE FASTAPI
+    # ========================================================
+
+    try:
+
+        update_response = requests.patch(
+            endpoint,
+            headers=headers,
+            timeout=10,
+        )
+
+    except requests.RequestException:
+
+        return no_update
+
+    if update_response.status_code != 200:
+
+        return no_update
+
+    # ========================================================
+    # TRIGGER NOTIFICATION REFRESH
+    # ========================================================
+
+    if current_value is None:
+
+        current_value = 0
+
+    return current_value + 1
+
+
+# ============================================================
+# MARK ALL NOTIFICATIONS AS READ
+# ============================================================
+
+@app.expanded_callback(
+    Output(
+        "notification-action-store",
+        "data",
+        allow_duplicate=True,
+    ),
+
+    Input(
+        "mark-all-read",
+        "n_clicks",
+    ),
+
+    State(
+        "notification-action-store",
+        "data",
+    ),
+
+    prevent_initial_call=True,
+)
+def mark_all_notifications_as_read(
+    n_clicks,
+    current_value,
+    request=None,
+):
+
+    # ========================================================
+    # NO CLICK
+    # ========================================================
+
+    if not n_clicks:
+
+        return no_update
+
+    # ========================================================
+    # GET TOKEN
+    # ========================================================
+
+    token = get_token(request)
+
+    if not token:
+
+        return no_update
+
+    # ========================================================
+    # MARK ALL AS READ
+    # ========================================================
+
+    try:
+
+        response = requests.patch(
+            "http://127.0.0.1:8000/"
+            "notifications/read-all",
+
+            headers={
+                "Authorization": f"Bearer {token}",
+            },
+
+            timeout=10,
+        )
+
+    except requests.RequestException:
+
+        return no_update
+
+    if response.status_code != 200:
+
+        return no_update
+
+    # ========================================================
+    # TRIGGER REFRESH
+    # ========================================================
+
+    if current_value is None:
+
+        current_value = 0
+
+    return current_value + 1

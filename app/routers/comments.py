@@ -22,6 +22,8 @@ from app.models.post import Post
 
 from app.models.user import User
 
+from app.models.notification import Notification
+
 from app.schemas.comment import (
     CommentCreate,
     CommentResponse
@@ -151,7 +153,31 @@ def add_comment(
     db.refresh(comment)
 
     # ==========================================
-    # 4. SEND EMAIL NOTIFICATION
+    # 4. CREATE DATABASE NOTIFICATION
+    # ==========================================
+
+    # Do not create a notification when
+    # a user comments on their own post.
+
+    if post.author_id != current_user.id:
+
+        notification = Notification(
+            user_id=post.author_id,
+            message=(
+                f"{current_user.username} "
+                f"commented on your post "
+                f"'{post.title}'"
+            ),
+            notification_type="comment",
+            is_read=False
+        )
+
+        db.add(notification)
+
+        db.commit()
+
+    # ==========================================
+    # 5. SEND EMAIL NOTIFICATION
     # ==========================================
 
     # Do not send an email if the user comments
@@ -168,7 +194,7 @@ def add_comment(
         )
 
     # ==========================================
-    # 5. RETURN COMMENT
+    # 6. RETURN COMMENT
     # ==========================================
 
     return comment

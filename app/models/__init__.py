@@ -3,6 +3,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.like import Like
 from app.models.post_image import PostImage
+from app.models.notification import Notification
 from app.models.subscription import (
     SubscriptionPlan,
     Subscription,
@@ -19,4 +20,6 @@ __all__ = [
     "SubscriptionPlan",
     "Subscription",
     "BillingHistory",
+    "Notification",
+
 ]

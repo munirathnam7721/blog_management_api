@@ -331,3 +331,100 @@ def create_subscription(
     db.refresh(billing)
 
     return new_subscription, billing, plan
+
+
+# =========================================================
+# RENEW SUBSCRIPTION
+# =========================================================
+
+def renew_subscription(
+    db: Session,
+    user_id: int
+):
+    """
+    Renew the user's active subscription.
+
+    Steps:
+    1. Find active subscription
+    2. Extend end date by 30 days
+    3. Create billing history
+    4. Generate invoice
+    5. Commit changes
+    """
+
+    # 1. Find active subscription
+    active_subscription = get_active_subscription(
+        db=db,
+        user_id=user_id
+    )
+
+    if not active_subscription:
+        raise HTTPException(
+            status_code=404,
+            detail="No active subscription found."
+        )
+
+    subscription, plan = active_subscription
+
+    # 2. Get user
+    user = (
+        db.query(User)
+        .filter(
+            User.id == user_id
+        )
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    # 3. Extend subscription by 30 days
+    subscription.end_date = (
+        subscription.end_date
+        + timedelta(days=30)
+    )
+
+    # 4. Generate transaction ID
+    transaction_id = (
+        f"TXN-{uuid.uuid4().hex[:12].upper()}"
+    )
+
+    # 5. Create billing history
+    billing = BillingHistory(
+        user_id=user_id,
+        subscription_id=subscription.id,
+        plan_id=plan.id,
+        amount=plan.price,
+        transaction_id=transaction_id,
+        billing_date=datetime.now(),
+        invoice_path=None,
+        payment_status="SUCCESS",
+    )
+
+    db.add(billing)
+
+    # Generate billing ID
+    db.flush()
+
+    # 6. Generate renewal invoice
+    invoice_path = generate_invoice(
+        user=user,
+        subscription=subscription,
+        billing=billing,
+        plan=plan
+    )
+
+    # 7. Save invoice path
+    billing.invoice_path = invoice_path
+
+    # 8. Commit changes
+    db.commit()
+
+    # 9. Refresh objects
+    db.refresh(subscription)
+    db.refresh(billing)
+
+    return subscription, billing, plan

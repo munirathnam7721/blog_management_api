@@ -21,6 +21,8 @@ from app.models.post import Post
 
 from app.models.user import User
 
+from app.models.notification import Notification
+
 from app.schemas.like import (
     LikeResponse
 )
@@ -112,13 +114,38 @@ def like_post(
 
     db.add(like)
 
+    # ==========================================
+    # 5. CREATE IN-APP NOTIFICATION
+    # ==========================================
+
+    # Do not create a notification when a user
+    # likes their own post.
+
+    if post.author_id != current_user.id:
+
+        notification = Notification(
+            user_id=post.author_id,
+            message=(
+                f"{current_user.username} "
+                f"liked your post '{post.title}'"
+            ),
+            notification_type="like",
+            is_read=False
+        )
+
+        db.add(notification)
+
+    # ==========================================
+    # 6. SAVE LIKE AND NOTIFICATION
+    # ==========================================
+
     db.commit()
 
     # ==========================================
-    # 5. SEND EMAIL NOTIFICATION
+    # 7. SEND EMAIL NOTIFICATION
     # ==========================================
 
-    # Do not send an email if the user likes
+    # Do not send an email when the user likes
     # their own post.
 
     if post.author_id != current_user.id:
@@ -132,7 +159,7 @@ def like_post(
         )
 
     # ==========================================
-    # 6. RETURN RESPONSE
+    # 8. RETURN RESPONSE
     # ==========================================
 
     return {
@@ -158,6 +185,10 @@ def unlike_post(
     )
 ):
 
+    # ==========================================
+    # 1. FIND LIKE
+    # ==========================================
+
     like = db.query(
         Like
     ).filter(
@@ -172,9 +203,17 @@ def unlike_post(
             detail="Like not found"
         )
 
+    # ==========================================
+    # 2. DELETE LIKE
+    # ==========================================
+
     db.delete(like)
 
     db.commit()
+
+    # ==========================================
+    # 3. RETURN RESPONSE
+    # ==========================================
 
     return {
         "message": "Post unliked successfully",
@@ -196,6 +235,10 @@ def get_like_count(
     db: Session = Depends(get_db)
 ):
 
+    # ==========================================
+    # 1. CHECK POST
+    # ==========================================
+
     post = db.query(
         Post
     ).filter(
@@ -209,11 +252,19 @@ def get_like_count(
             detail="Post not found"
         )
 
+    # ==========================================
+    # 2. COUNT LIKES
+    # ==========================================
+
     like_count = db.query(
         Like
     ).filter(
         Like.post_id == post_id
     ).count()
+
+    # ==========================================
+    # 3. RETURN RESPONSE
+    # ==========================================
 
     return {
         "post_id": post_id,

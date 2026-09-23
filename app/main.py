@@ -3,10 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
 
 from app.database.base import Base
-
-from app.database.connection import (
-    engine
-)
+from app.database.connection import engine
 
 # ==========================================
 # IMPORT ALL MODELS
@@ -21,6 +18,7 @@ from app.models import (
     SubscriptionPlan,
     Subscription,
     BillingHistory,
+    Notification,
 )
 
 # ==========================================
@@ -34,6 +32,10 @@ from app.routers import (
     likes,
     subscriptions,
     dashboard,
+)
+
+from app.routers.notifications import (
+    router as notifications_router
 )
 
 
@@ -90,39 +92,22 @@ def custom_openapi():
         # If current object is a dictionary
         if isinstance(obj, dict):
 
-            # FastAPI 0.129+ / newer OpenAPI
-            # may represent UploadFile as:
-            #
-            # type: string
-            # contentMediaType: application/octet-stream
-            #
-            # Swagger UI may then show:
-            # "Add string item"
-            #
-            # Convert it to:
-            #
-            # type: string
-            # format: binary
-            #
-            # so Swagger shows "Choose File".
-
+            # Convert application/octet-stream
+            # into Swagger binary file format
             if obj.get(
                 "contentMediaType"
             ) == "application/octet-stream":
 
-                # Remove contentMediaType
                 obj.pop(
                     "contentMediaType",
                     None
                 )
 
-                # Set correct file schema
                 obj["type"] = "string"
                 obj["format"] = "binary"
 
-            # Check all nested objects
+            # Check nested objects
             for value in obj.values():
-
                 fix_file_schema(value)
 
         # If current object is a list
@@ -130,20 +115,18 @@ def custom_openapi():
 
             # Check every item
             for item in obj:
-
                 fix_file_schema(item)
 
-    # Apply the fix to the complete OpenAPI schema
+    # Apply file upload fix
     fix_file_schema(schema)
 
-    # Save the modified schema
+    # Save modified schema
     app.openapi_schema = schema
 
     return app.openapi_schema
 
 
 # Replace FastAPI's default OpenAPI generator
-# with our custom version
 app.openapi = custom_openapi
 
 
@@ -162,30 +145,44 @@ app.mount(
 # ROUTERS
 # ==========================================
 
+# Authentication
 app.include_router(
     auth.router
 )
 
+# Posts
 app.include_router(
     posts.router
 )
 
+# Comments
 app.include_router(
     comments.router
 )
 
+# Likes
 app.include_router(
     likes.router
 )
 
+# Subscriptions
 app.include_router(
     subscriptions.router
 )
-app.include_router(dashboard.router)
+
+# Dashboard
+app.include_router(
+    dashboard.router
+)
+
+# Notifications
+app.include_router(
+    notifications_router
+)
 
 
 # ==========================================
-# ROOT
+# ROOT ENDPOINT
 # ==========================================
 
 @app.get("/")

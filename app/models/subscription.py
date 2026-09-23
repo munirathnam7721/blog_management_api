@@ -12,6 +12,10 @@ from sqlalchemy import (
 from app.database.base import Base
 
 
+# =========================================================
+# SUBSCRIPTION PLAN
+# =========================================================
+
 class SubscriptionPlan(Base):
 
     __tablename__ = "subscriptions_subscriptionplan"
@@ -70,6 +74,10 @@ class SubscriptionPlan(Base):
     )
 
 
+# =========================================================
+# SUBSCRIPTION
+# =========================================================
+
 class Subscription(Base):
 
     __tablename__ = "subscriptions_subscription"
@@ -112,6 +120,10 @@ class Subscription(Base):
         nullable=False
     )
 
+
+# =========================================================
+# BILLING HISTORY
+# =========================================================
 
 class BillingHistory(Base):
 

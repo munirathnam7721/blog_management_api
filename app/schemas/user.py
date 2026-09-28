@@ -31,6 +31,8 @@ class UserResponse(BaseModel):
 
     email: EmailStr
 
+    provider: str
+
     model_config = ConfigDict(
         from_attributes=True
     )

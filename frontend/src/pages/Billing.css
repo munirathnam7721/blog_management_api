@@ -1,0 +1,223 @@
+/* =========================================
+   BILLING PAGE
+========================================= */
+
+.billing-page {
+    width: 100%;
+}
+
+/* =========================================
+   HEADER
+========================================= */
+
+.billing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.billing-header h1 {
+    margin: 0;
+    font-size: 30px;
+    color: #111827;
+}
+
+.billing-header p {
+    margin: 6px 0 0;
+    color: #6b7280;
+}
+
+/* =========================================
+   LOADING
+========================================= */
+
+.billing-loading {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #6b7280;
+}
+
+.billing-spinner {
+    animation: billing-spin 1s linear infinite;
+}
+
+@keyframes billing-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================
+   ERROR
+========================================= */
+
+.billing-error {
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* =========================================
+   EMPTY
+========================================= */
+
+.billing-empty {
+    padding: 60px 20px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    color: #6b7280;
+}
+
+.billing-empty svg {
+    margin-bottom: 12px;
+}
+
+.billing-empty h3 {
+    margin: 0 0 8px;
+    color: #111827;
+}
+
+.billing-empty p {
+    margin: 0;
+}
+
+/* =========================================
+   BILLING CARD
+========================================= */
+
+.billing-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* =========================================
+   TABLE
+========================================= */
+
+.billing-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.billing-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+}
+
+.billing-table th {
+    padding: 15px 18px;
+    text-align: left;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.billing-table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #4b5563;
+    font-size: 14px;
+}
+
+.billing-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.billing-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* =========================================
+   TRANSACTION
+========================================= */
+
+.transaction-id {
+    font-family: monospace;
+    font-size: 13px;
+    color: #374151;
+}
+
+/* =========================================
+   AMOUNT
+========================================= */
+
+.billing-amount {
+    font-weight: 600;
+    color: #111827 !important;
+}
+
+/* =========================================
+   PAYMENT STATUS
+========================================= */
+
+.payment-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-other {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* =========================================
+   INVOICE
+========================================= */
+
+.invoice-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.invoice-link:hover {
+    text-decoration: underline;
+}
+
+.no-invoice {
+    color: #9ca3af;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 700px) {
+    .billing-header h1 {
+        font-size: 24px;
+    }
+
+    .billing-card {
+        border-radius: 8px;
+    }
+}

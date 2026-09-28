@@ -1,0 +1,651 @@
+/* ==========================================
+   PROFILE PAGE
+========================================== */
+
+.profile-page {
+    width: 100%;
+    min-height: calc(100vh - 70px);
+    padding: 30px;
+    background: #f6f8fc;
+    box-sizing: border-box;
+}
+
+
+/* ==========================================
+   MAIN CONTAINER
+========================================== */
+
+.profile-container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+
+/* ==========================================
+   PAGE HEADER
+========================================== */
+
+.profile-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 24px;
+}
+
+
+.profile-page-header h1 {
+    margin: 0 0 6px 0;
+
+    font-size: 28px;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+
+.profile-page-header p {
+    margin: 0;
+
+    font-size: 14px;
+
+    color: #6b7280;
+}
+
+
+/* ==========================================
+   ACTIVE STATUS
+========================================== */
+
+.profile-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 9px 14px;
+
+    border-radius: 20px;
+
+    background: #ecfdf5;
+
+    color: #15803d;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* ==========================================
+   PROFILE OVERVIEW
+========================================== */
+
+.profile-overview {
+    display: flex;
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 26px;
+
+    margin-bottom: 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 4px 12px rgba(
+            15,
+            23,
+            42,
+            0.04
+        );
+}
+
+
+/* ==========================================
+   AVATAR
+========================================== */
+
+.profile-avatar-large {
+    width: 82px;
+    height: 82px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    border: 5px solid #f5f7ff;
+}
+
+
+/* ==========================================
+   PROFILE OVERVIEW INFO
+========================================== */
+
+.profile-overview-info {
+    flex: 1;
+}
+
+
+.profile-overview-info h2 {
+    margin: 0 0 6px 0;
+
+    font-size: 22px;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+
+.profile-overview-info p {
+    margin: 0;
+
+    font-size: 14px;
+
+    color: #6b7280;
+}
+
+
+/* ==========================================
+   PROVIDER
+========================================== */
+
+.profile-provider {
+    min-width: 150px;
+
+    padding: 14px 18px;
+
+    border-left: 1px solid #e5e7eb;
+}
+
+
+.profile-provider span {
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-size: 12px;
+
+    color: #9ca3af;
+}
+
+
+.profile-provider strong {
+    font-size: 14px;
+
+    color: #4f46e5;
+}
+
+
+/* ==========================================
+   SECTION
+========================================== */
+
+.profile-section {
+    padding: 26px;
+
+    margin-bottom: 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 4px 12px rgba(
+            15,
+            23,
+            42,
+            0.04
+        );
+}
+
+
+.profile-section-header {
+    margin-bottom: 20px;
+}
+
+
+.profile-section-header h2 {
+    margin: 0 0 5px 0;
+
+    font-size: 18px;
+
+    color: #111827;
+}
+
+
+.profile-section-header p {
+    margin: 0;
+
+    font-size: 13px;
+
+    color: #6b7280;
+}
+
+
+/* ==========================================
+   INFORMATION GRID
+========================================== */
+
+.profile-info-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 16px;
+}
+
+
+/* ==========================================
+   INFORMATION CARD
+========================================== */
+
+.profile-info-card {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    min-height: 80px;
+
+    padding: 16px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    background: #fafbfc;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.profile-info-card:hover {
+    border-color: #c7d2fe;
+
+    box-shadow:
+        0 4px 12px rgba(
+            79,
+            70,
+            229,
+            0.08
+        );
+}
+
+
+/* ==========================================
+   INFORMATION ICON
+========================================== */
+
+.profile-info-icon {
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+}
+
+
+/* ==========================================
+   INFORMATION CONTENT
+========================================== */
+
+.profile-info-content {
+    min-width: 0;
+}
+
+
+.profile-info-content span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+
+.profile-info-content strong {
+    display: block;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 15px;
+
+    color: #111827;
+}
+
+
+/* ==========================================
+   SECURITY
+========================================== */
+
+.profile-security {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 20px 24px;
+
+    margin-bottom: 24px;
+
+    background: #f0fdf4;
+
+    border: 1px solid #bbf7d0;
+
+    border-radius: 12px;
+}
+
+
+.security-icon {
+    width: 44px;
+    height: 44px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #dcfce7;
+
+    color: #16a34a;
+}
+
+
+.security-content {
+    flex: 1;
+}
+
+
+.security-content h3 {
+    margin: 0 0 4px 0;
+
+    font-size: 15px;
+
+    color: #166534;
+}
+
+
+.security-content p {
+    margin: 0;
+
+    font-size: 13px;
+
+    color: #4b7a5a;
+}
+
+
+.security-status {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    color: #15803d;
+}
+
+
+/* ==========================================
+   LOGOUT SECTION
+========================================== */
+
+.profile-logout-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 22px 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 14px;
+}
+
+
+.profile-logout-section h3 {
+    margin: 0 0 5px 0;
+
+    font-size: 16px;
+
+    color: #111827;
+}
+
+
+.profile-logout-section p {
+    margin: 0;
+
+    font-size: 13px;
+
+    color: #6b7280;
+}
+
+
+/* ==========================================
+   LOGOUT BUTTON
+========================================== */
+
+.profile-logout-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-width: 130px;
+
+    padding: 11px 18px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #ef4444;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.profile-logout-button:hover {
+    background: #dc2626;
+
+    transform: translateY(-1px);
+}
+
+
+/* ==========================================
+   LOADING
+========================================== */
+
+.profile-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 400px;
+
+    font-size: 15px;
+
+    color: #6b7280;
+}
+
+
+/* ==========================================
+   ERROR
+========================================== */
+
+.profile-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    min-height: 400px;
+
+    gap: 15px;
+}
+
+
+.profile-error p {
+    margin: 0;
+
+    color: #dc2626;
+}
+
+
+.profile-error button {
+    padding: 10px 18px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: #4f46e5;
+
+    color: #ffffff;
+
+    cursor: pointer;
+}
+
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 768px) {
+
+    .profile-page {
+        padding: 20px;
+    }
+
+
+    .profile-page-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+
+    .profile-overview {
+        align-items: flex-start;
+
+        flex-wrap: wrap;
+    }
+
+
+    .profile-provider {
+        width: 100%;
+
+        padding: 15px 0 0 0;
+
+        border-left: none;
+
+        border-top: 1px solid #e5e7eb;
+    }
+
+
+    .profile-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .profile-security {
+        align-items: flex-start;
+
+        flex-wrap: wrap;
+    }
+
+
+    .security-status {
+        width: 100%;
+    }
+
+
+    .profile-logout-section {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .profile-logout-button {
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .profile-page {
+        padding: 15px;
+    }
+
+
+    .profile-overview {
+        padding: 20px;
+    }
+
+
+    .profile-section {
+        padding: 20px;
+    }
+
+
+    .profile-page-header h1 {
+        font-size: 24px;
+    }
+
+}

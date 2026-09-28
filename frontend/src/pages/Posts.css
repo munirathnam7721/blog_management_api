@@ -1,0 +1,1388 @@
+/* =========================================================
+   POSTS PAGE - MODERN DASHBOARD UI
+========================================================= */
+
+.posts-page {
+    min-height: 100vh;
+    padding: 32px;
+    background: #f8fafc;
+    color: #0f172a;
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.posts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.posts-header h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 32px;
+    font-weight: 750;
+    letter-spacing: -0.7px;
+}
+
+.posts-header p {
+    margin: 7px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   CREATE BUTTON
+========================================================= */
+
+.create-post-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 44px;
+    padding: 0 18px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #2563eb;
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    box-shadow: 0 5px 14px rgba(37, 99, 235, 0.22);
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.create-post-button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+}
+
+.create-post-button:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   SEARCH CONTAINER
+========================================================= */
+
+.posts-search {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    margin-bottom: 26px;
+}
+
+.posts-search input {
+    width: 100%;
+    max-width: 560px;
+    height: 46px;
+
+    padding: 0 16px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #0f172a;
+
+    font-size: 14px;
+
+    outline: none;
+
+    box-sizing: border-box;
+
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.posts-search input::placeholder {
+    color: #94a3b8;
+}
+
+.posts-search input:hover {
+    border-color: #cbd5e1;
+}
+
+.posts-search input:focus {
+    border-color: #3b82f6;
+
+    box-shadow:
+        0 0 0 3px rgba(59, 130, 246, 0.10),
+        0 3px 10px rgba(15, 23, 42, 0.04);
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.posts-error {
+    margin-bottom: 22px;
+    padding: 14px 16px;
+
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+
+    background: #fff5f5;
+    color: #dc2626;
+
+    font-size: 14px;
+    line-height: 1.5;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   POSTS GRID
+========================================================= */
+
+.posts-list {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 22px;
+}
+
+
+/* =========================================================
+   POST CARD
+========================================================= */
+
+.post-card {
+    position: relative;
+
+    overflow: hidden;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 2px 5px rgba(15, 23, 42, 0.03),
+        0 8px 25px rgba(15, 23, 42, 0.04);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-3px);
+
+    border-color: #dbeafe;
+
+    box-shadow:
+        0 5px 10px rgba(15, 23, 42, 0.04),
+        0 18px 35px rgba(15, 23, 42, 0.08);
+}
+
+
+/* =========================================================
+   POST IMAGE
+========================================================= */
+
+.post-card-image {
+    position: relative;
+
+    width: 100%;
+    height: 220px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e2e8f0,
+            #f8fafc
+        );
+}
+
+.post-card-image img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    transition:
+        transform 0.4s ease;
+}
+
+.post-card:hover .post-card-image img {
+    transform: scale(1.04);
+}
+
+
+/* =========================================================
+   POST CONTENT
+========================================================= */
+
+.post-card-content {
+    padding: 21px;
+}
+
+.post-card-title {
+    margin: 0 0 9px;
+
+    color: #0f172a;
+
+    font-size: 19px;
+    font-weight: 700;
+
+    line-height: 1.4;
+
+    letter-spacing: -0.2px;
+}
+
+.post-card-description {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 14px;
+
+    line-height: 1.65;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   POST META
+========================================================= */
+
+.post-card-meta {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-top: 18px;
+    padding-top: 16px;
+
+    border-top: 1px solid #f1f5f9;
+}
+
+.post-date {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+.post-status {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 27px;
+
+    padding: 0 10px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 0.2px;
+
+    text-transform: capitalize;
+}
+
+
+/* Draft */
+
+.post-status.draft {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+
+/* Scheduled */
+
+.post-status.scheduled {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+
+/* Published */
+
+.post-status.published {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+
+/* =========================================================
+   POST ACTIONS
+========================================================= */
+
+.post-card-actions {
+    display: flex;
+
+    gap: 9px;
+
+    margin-top: 18px;
+}
+
+.post-card-actions button {
+    flex: 1;
+
+    min-height: 38px;
+
+    padding: 0 12px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+/* Edit */
+
+.post-card-actions .edit-button:hover {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+
+/* Delete */
+
+.post-card-actions .delete-button:hover {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   POST FORM
+========================================================= */
+
+.post-form {
+    width: 100%;
+
+    margin-bottom: 26px;
+    padding: 28px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 4px 12px rgba(15, 23, 42, 0.04),
+        0 15px 35px rgba(15, 23, 42, 0.05);
+
+    box-sizing: border-box;
+}
+
+.post-form h2 {
+    margin: 0 0 24px;
+
+    color: #0f172a;
+
+    font-size: 22px;
+    font-weight: 700;
+
+    letter-spacing: -0.3px;
+}
+
+
+/* =========================================================
+   FORM GROUP
+========================================================= */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #334155;
+
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border: 1px solid #dbe2ea;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #0f172a;
+
+    font-size: 14px;
+
+    outline: none;
+
+    box-sizing: border-box;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.form-group input {
+    height: 45px;
+}
+
+.form-group textarea {
+    min-height: 170px;
+
+    resize: vertical;
+
+    line-height: 1.65;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #94a3b8;
+}
+
+.form-group input:hover,
+.form-group textarea:hover,
+.form-group select:hover {
+    border-color: #cbd5e1;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #3b82f6;
+
+    box-shadow:
+        0 0 0 3px rgba(59, 130, 246, 0.10);
+}
+
+
+/* =========================================================
+   PUBLISH OPTIONS
+========================================================= */
+
+.publish-options {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-top: 10px;
+}
+
+.publish-option {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-height: 48px;
+
+    padding: 0 14px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+.publish-option:hover {
+    border-color: #93c5fd;
+    background: #f8fbff;
+}
+
+.publish-option input {
+    width: auto;
+
+    accent-color: #2563eb;
+
+    cursor: pointer;
+}
+
+.publish-option span {
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   SCHEDULE FIELD
+========================================================= */
+
+.schedule-field {
+    margin-top: 15px;
+
+    padding: 16px;
+
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+
+    background: #fffaf5;
+}
+
+.schedule-field label {
+    color: #9a3412;
+}
+
+.schedule-field input {
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   IMAGE UPLOAD
+========================================================= */
+
+.image-upload {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 130px;
+
+    padding: 20px;
+
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+
+    background: #f8fafc;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+.image-upload:hover {
+    border-color: #60a5fa;
+    background: #eff6ff;
+}
+
+.image-upload p {
+    margin: 8px 0 0;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   FORM ACTIONS
+========================================================= */
+
+.post-form-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 26px;
+}
+
+.post-form-actions button {
+    min-height: 42px;
+
+    padding: 0 18px;
+
+    border-radius: 9px;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+/* Cancel */
+
+.cancel-button {
+    border: 1px solid #e2e8f0;
+
+    background: #ffffff;
+    color: #475569;
+}
+
+.cancel-button:hover {
+    background: #f8fafc;
+}
+
+
+/* Submit */
+
+.submit-button {
+    border: none;
+
+    background: #2563eb;
+    color: #ffffff;
+
+    box-shadow:
+        0 4px 10px rgba(37, 99, 235, 0.18);
+}
+
+.submit-button:hover {
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.posts-loading {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 280px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.no-posts {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 280px;
+
+    padding: 30px;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    text-align: center;
+}
+
+.no-posts h3 {
+    margin: 0 0 8px;
+
+    color: #334155;
+
+    font-size: 19px;
+}
+
+.no-posts p {
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 18px;
+
+    margin-top: 30px;
+}
+
+.pagination button {
+    min-height: 38px;
+
+    padding: 0 15px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.pagination button:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+}
+
+.pagination span {
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 550;
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .posts-page {
+        padding: 24px;
+    }
+
+    .posts-list {
+        grid-template-columns: 1fr;
+    }
+
+    .publish-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .posts-page {
+        padding: 16px;
+    }
+
+    .posts-header {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+    .posts-header h1 {
+        font-size: 26px;
+    }
+
+    .create-post-button {
+        width: 100%;
+    }
+
+    .posts-search input {
+        max-width: 100%;
+    }
+
+    .post-card-image {
+        height: 190px;
+    }
+
+    .post-card-content {
+        padding: 17px;
+    }
+
+    .post-card-actions {
+        flex-direction: column;
+    }
+
+    .post-card-actions button {
+        width: 100%;
+    }
+
+    .post-form {
+        padding: 20px 17px;
+    }
+
+    .post-form-actions {
+        flex-direction: column-reverse;
+
+        align-items: stretch;
+    }
+
+    .post-form-actions button {
+        width: 100%;
+    }
+
+    .pagination {
+        gap: 10px;
+    }
+
+    .pagination button {
+        padding: 0 12px;
+    }
+}
+
+/* =========================================================
+   POST CARD
+========================================================= */
+
+.post-card {
+    overflow: hidden;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 2px 6px rgba(15, 23, 42, 0.03),
+        0 10px 30px rgba(15, 23, 42, 0.04);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-3px);
+
+    border-color: #dbeafe;
+
+    box-shadow:
+        0 5px 12px rgba(15, 23, 42, 0.05),
+        0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+
+/* =========================================================
+   POST IMAGES
+========================================================= */
+
+.post-images {
+    width: 100%;
+    height: 230px;
+
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 2px;
+
+    overflow: hidden;
+
+    background: #f1f5f9;
+}
+
+
+/* Multiple images */
+
+.post-images.multiple-images {
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    height: 230px;
+}
+
+.post-images.multiple-images
+.post-image:first-child {
+    grid-row: span 2;
+}
+
+
+/* Image */
+
+.post-image {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    min-width: 0;
+
+    transition:
+        transform 0.35s ease;
+}
+
+.post-card:hover
+.post-image {
+    transform: scale(1.02);
+}
+
+
+/* =========================================================
+   CARD BODY
+========================================================= */
+
+.post-card-body {
+    padding: 21px;
+}
+
+
+/* =========================================================
+   TITLE + STATUS
+========================================================= */
+
+.post-title-row {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 10px;
+}
+
+.post-title-row h2 {
+    margin: 0;
+
+    color: #0f172a;
+
+    font-size: 20px;
+    font-weight: 700;
+
+    line-height: 1.4;
+
+    letter-spacing: -0.25px;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.post-status {
+    flex-shrink: 0;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 27px;
+
+    padding: 0 10px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: capitalize;
+}
+
+
+/* Draft */
+
+.post-status.draft {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+
+/* Scheduled */
+
+.post-status.scheduled {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+
+/* Published */
+
+.post-status.published {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+
+/* =========================================================
+   POST CONTENT
+========================================================= */
+
+.post-content {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 14px;
+
+    line-height: 1.65;
+
+    display: -webkit-box;
+
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   META
+========================================================= */
+
+.post-meta {
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    margin-top: 18px;
+
+    padding: 14px 0;
+
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+
+/* Meta item */
+
+.post-meta-item {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   LIKE BUTTON
+========================================================= */
+
+.like-button,
+.comments-toggle {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    min-height: 30px;
+
+    padding: 0 9px;
+
+    border: 1px solid transparent;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #64748b;
+
+    font-size: 12px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.like-button:hover {
+    background: #fff1f2;
+
+    color: #e11d48;
+}
+
+.like-button.liked {
+    background: #fff1f2;
+
+    color: #e11d48;
+}
+
+.like-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   COMMENTS BUTTON
+========================================================= */
+
+.comments-toggle:hover,
+.comments-toggle.active {
+    background: #eff6ff;
+
+    border-color: #dbeafe;
+
+    color: #2563eb;
+}
+
+
+/* =========================================================
+   LIKE ERROR
+========================================================= */
+
+.like-error {
+    margin: 10px 0 0;
+
+    color: #dc2626;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.post-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 9px;
+
+    margin-top: 17px;
+}
+
+.edit-post-button,
+.delete-post-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 38px;
+
+    padding: 0 13px;
+
+    border-radius: 8px;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+/* Edit */
+
+.edit-post-button {
+    border: 1px solid #dbeafe;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+}
+
+.edit-post-button:hover {
+    border-color: #bfdbfe;
+
+    background: #dbeafe;
+
+    transform: translateY(-1px);
+}
+
+
+/* Delete */
+
+.delete-post-button {
+    border: 1px solid #fecaca;
+
+    background: #fff5f5;
+
+    color: #dc2626;
+}
+
+.delete-post-button:hover {
+    border-color: #fca5a5;
+
+    background: #fee2e2;
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   COMMENTS SECTION
+========================================================= */
+
+.comments-section {
+    margin-top: 18px;
+
+    padding-top: 18px;
+
+    border-top: 1px solid #e2e8f0;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .post-images {
+        height: 190px;
+    }
+
+    .post-images.multiple-images {
+        height: 190px;
+    }
+
+    .post-card-body {
+        padding: 17px;
+    }
+
+    .post-title-row {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .post-title-row h2 {
+        font-size: 18px;
+    }
+
+    .post-meta {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 7px;
+    }
+
+    .post-actions {
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .edit-post-button,
+    .delete-post-button {
+        width: 100%;
+    }
+}

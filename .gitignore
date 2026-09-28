@@ -24,3 +24,11 @@ media/posts/*
 # OS files
 .DS_Store
 Thumbs.db
+# Node / React
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/git rm -r --cached node_modules
+
+# Generated invoices
+media/invoices/

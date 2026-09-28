@@ -1,6 +1,8 @@
 import os
 import uuid
 
+from datetime import datetime, timezone
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -42,9 +44,9 @@ router = APIRouter(
 )
 
 
-# ==========================================
+# ============================================================
 # IMAGE UPLOAD SETTINGS
-# ==========================================
+# ============================================================
 
 UPLOAD_DIR = "media/posts"
 
@@ -61,14 +63,60 @@ ALLOWED_IMAGE_TYPES = {
 }
 
 
-# ==========================================
+# ============================================================
+# POST STATUS
+# ============================================================
+
+ALLOWED_POST_STATUSES = {
+    "draft",
+    "published",
+    "scheduled"
+}
+
+
+# ============================================================
+# TIMEZONE HELPER
+# ============================================================
+
+def normalize_to_utc(
+    value: datetime | None
+) -> datetime | None:
+
+    if value is None:
+        return None
+
+    # If datetime has no timezone,
+    # keep it as-is.
+    if value.tzinfo is None:
+        return value
+
+    # Convert timezone-aware datetime
+    # to UTC.
+    #
+    # MySQL DATETIME stores the value
+    # without timezone information.
+    return value.astimezone(
+        timezone.utc
+    ).replace(
+        tzinfo=None
+    )
+
+
+# ============================================================
 # GET ALL POSTS
-# Public
-# Pagination + Search
-# ==========================================
+#
+# PUBLIC
+#
+# Only published posts are visible publicly.
+#
+# Supports:
+# - Pagination
+# - Search
+# ============================================================
 
 @router.get("/")
 def get_all_posts(
+
     page: int = Query(
         1,
         ge=1,
@@ -88,13 +136,18 @@ def get_all_posts(
     ),
 
     db: Session = Depends(get_db)
+
 ):
 
-    query = db.query(Post)
+    query = db.query(
+        Post
+    ).filter(
+        Post.status == "published"
+    )
 
-    # --------------------------------------
+    # ========================================================
     # SEARCH
-    # --------------------------------------
+    # ========================================================
 
     if search:
 
@@ -105,15 +158,15 @@ def get_all_posts(
             (Post.content.ilike(search_value))
         )
 
-    # --------------------------------------
+    # ========================================================
     # TOTAL POSTS
-    # --------------------------------------
+    # ========================================================
 
     total = query.count()
 
-    # --------------------------------------
+    # ========================================================
     # TOTAL PAGES
-    # --------------------------------------
+    # ========================================================
 
     total_pages = (
         (total + limit - 1) // limit
@@ -121,11 +174,13 @@ def get_all_posts(
         else 0
     )
 
-    # --------------------------------------
+    # ========================================================
     # PAGINATION
-    # --------------------------------------
+    # ========================================================
 
-    offset = (page - 1) * limit
+    offset = (
+        page - 1
+    ) * limit
 
     posts = query.order_by(
         Post.created_at.desc()
@@ -144,53 +199,137 @@ def get_all_posts(
     }
 
 
-# ==========================================
-# MY POSTS
-# Authenticated
-# ==========================================
+# ============================================================
+# GET MY POSTS
+#
+# AUTHENTICATED
+#
+# Shows:
+# - Draft posts
+# - Scheduled posts
+# - Published posts
+#
+# Supports:
+# - Pagination
+# - Search
+# ============================================================
 
 @router.get(
-    "/mine/list",
-    response_model=list[PostResponse]
+    "/mine/list"
 )
 def get_my_posts(
+
+    page: int = Query(
+        1,
+        ge=1,
+        description="Page number"
+    ),
+
+    limit: int = Query(
+        10,
+        ge=1,
+        le=100,
+        description="Number of posts per page"
+    ),
+
+    search: str | None = Query(
+        None,
+        description="Search posts by title or content"
+    ),
+
     db: Session = Depends(get_db),
 
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
-    posts = db.query(
+    query = db.query(
         Post
     ).filter(
         Post.author_id == current_user.id
-    ).order_by(
+    )
+
+    # ========================================================
+    # SEARCH
+    # ========================================================
+
+    if search:
+
+        search_value = f"%{search}%"
+
+        query = query.filter(
+            (Post.title.ilike(search_value)) |
+            (Post.content.ilike(search_value))
+        )
+
+    # ========================================================
+    # TOTAL POSTS
+    # ========================================================
+
+    total = query.count()
+
+    # ========================================================
+    # TOTAL PAGES
+    # ========================================================
+
+    total_pages = (
+        (total + limit - 1) // limit
+        if total > 0
+        else 0
+    )
+
+    # ========================================================
+    # PAGINATION
+    # ========================================================
+
+    offset = (
+        page - 1
+    ) * limit
+
+    posts = query.order_by(
         Post.created_at.desc()
+    ).offset(
+        offset
+    ).limit(
+        limit
     ).all()
 
-    return posts
+    return {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "total_pages": total_pages,
+        "posts": posts
+    }
 
 
-# ==========================================
+# ============================================================
 # GET SINGLE POST
-# Public
-# ==========================================
+#
+# PUBLIC
+#
+# Only published posts can be viewed publicly.
+# ============================================================
 
 @router.get(
     "/{post_id}",
     response_model=PostResponse
 )
 def get_post(
+
     post_id: int,
 
     db: Session = Depends(get_db)
+
 ):
 
     post = db.query(
         Post
     ).filter(
-        Post.id == post_id
+        Post.id == post_id,
+        Post.status == "published"
     ).first()
 
     if not post:
@@ -203,12 +342,18 @@ def get_post(
     return post
 
 
-# ==========================================
+# ============================================================
 # CREATE POST
-# Authenticated
-# Subscription Limit
-# Multiple Image Upload
-# ==========================================
+#
+# AUTHENTICATED
+# SUBSCRIPTION LIMIT
+# MULTIPLE IMAGE UPLOAD
+#
+# STATUS:
+# - draft
+# - published
+# - scheduled
+# ============================================================
 
 @router.post(
     "/",
@@ -228,6 +373,14 @@ async def create_post(
         min_length=1
     ),
 
+    post_status: str = Form(
+        default="draft"
+    ),
+
+    scheduled_at: datetime | None = Form(
+        default=None
+    ),
+
     images: list[UploadFile] | None = File(
         default=None
     ),
@@ -237,20 +390,102 @@ async def create_post(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
-    # --------------------------------------
+    # ========================================================
+    # CONVERT SCHEDULED TIME TO UTC
+    # ========================================================
+
+    scheduled_at = normalize_to_utc(
+        scheduled_at
+    )
+
+    # ========================================================
+    # VALIDATE STATUS
+    # ========================================================
+
+    if post_status not in ALLOWED_POST_STATUSES:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid post status. "
+                "Allowed values are: "
+                "draft, published, scheduled."
+            )
+        )
+
+    # ========================================================
+    # DRAFT VALIDATION
+    # ========================================================
+
+    if post_status == "draft":
+
+        if scheduled_at is not None:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Draft posts cannot have "
+                    "a scheduled date."
+                )
+            )
+
+    # ========================================================
+    # PUBLISHED VALIDATION
+    # ========================================================
+
+    if post_status == "published":
+
+        if scheduled_at is not None:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Published posts cannot have "
+                    "a scheduled date."
+                )
+            )
+
+    # ========================================================
+    # SCHEDULED VALIDATION
+    # ========================================================
+
+    if post_status == "scheduled":
+
+        if scheduled_at is None:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Scheduled posts require "
+                    "a scheduled date and time."
+                )
+            )
+
+        if scheduled_at <= datetime.utcnow():
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Scheduled date and time "
+                    "must be in the future."
+                )
+            )
+
+    # ========================================================
     # CHECK POST LIMIT
-    # --------------------------------------
+    # ========================================================
 
     check_post_limit(
         db=db,
         user_id=current_user.id
     )
 
-    # --------------------------------------
+    # ========================================================
     # GET ACTIVE SUBSCRIPTION
-    # --------------------------------------
+    # ========================================================
 
     active_subscription = get_active_subscription(
         db=db,
@@ -269,21 +504,13 @@ async def create_post(
 
     subscription, plan = active_subscription
 
-    # --------------------------------------
-    # GET IMAGE LIMIT
-    # --------------------------------------
+    # ========================================================
+    # IMAGE LIMIT
+    # ========================================================
 
     image_limit = plan.max_images_per_post
 
-    # --------------------------------------
-    # IMAGE LIST
-    # --------------------------------------
-
     uploaded_images = images or []
-
-    # --------------------------------------
-    # CHECK IMAGE LIMIT
-    # --------------------------------------
 
     if image_limit is not None:
 
@@ -297,29 +524,47 @@ async def create_post(
                 )
             )
 
-    # --------------------------------------
+    # ========================================================
+    # PUBLISHED TIME
+    # ========================================================
+
+    published_at = None
+
+    if post_status == "published":
+
+        published_at = datetime.utcnow()
+
+    # ========================================================
     # CREATE POST
-    # --------------------------------------
+    # ========================================================
 
     post = Post(
+
         title=title,
+
         content=content,
+
         image=None,
-        author_id=current_user.id
+
+        author_id=current_user.id,
+
+        status=post_status,
+
+        scheduled_at=scheduled_at,
+
+        published_at=published_at
     )
 
     db.add(post)
 
-    # Get generated post ID
     db.flush()
 
-    # --------------------------------------
+    # ========================================================
     # UPLOAD IMAGES
-    # --------------------------------------
+    # ========================================================
 
     for image in uploaded_images:
 
-        # Check image type
         if image.content_type not in ALLOWED_IMAGE_TYPES:
 
             raise HTTPException(
@@ -330,41 +575,21 @@ async def create_post(
                 )
             )
 
-        # ----------------------------------
-        # GET EXTENSION
-        # ----------------------------------
-
         extension = ALLOWED_IMAGE_TYPES[
             image.content_type
         ]
-
-        # ----------------------------------
-        # GENERATE UNIQUE FILE NAME
-        # ----------------------------------
 
         filename = (
             f"{uuid.uuid4().hex}"
             f"{extension}"
         )
 
-        # ----------------------------------
-        # FILE PATH
-        # ----------------------------------
-
         file_path = os.path.join(
             UPLOAD_DIR,
             filename
         )
 
-        # ----------------------------------
-        # READ FILE
-        # ----------------------------------
-
         contents = await image.read()
-
-        # ----------------------------------
-        # SAVE FILE
-        # ----------------------------------
 
         with open(
             file_path,
@@ -373,20 +598,18 @@ async def create_post(
 
             file.write(contents)
 
-        # ----------------------------------
-        # SAVE IMAGE RECORD
-        # ----------------------------------
-
         post_image = PostImage(
+
             post_id=post.id,
+
             image=f"/media/posts/{filename}"
         )
 
         db.add(post_image)
 
-    # --------------------------------------
-    # SAVE EVERYTHING
-    # --------------------------------------
+    # ========================================================
+    # SAVE
+    # ========================================================
 
     db.commit()
 
@@ -395,10 +618,12 @@ async def create_post(
     return post
 
 
-# ==========================================
+# ============================================================
 # UPDATE POST
-# Owner Only
-# ==========================================
+#
+# AUTHENTICATED
+# OWNER ONLY
+# ============================================================
 
 @router.put(
     "/{post_id}",
@@ -419,6 +644,14 @@ async def update_post(
         min_length=1
     ),
 
+    post_status: str | None = Form(
+        default=None
+    ),
+
+    scheduled_at: datetime | None = Form(
+        default=None
+    ),
+
     images: list[UploadFile] | None = File(
         default=None
     ),
@@ -428,11 +661,12 @@ async def update_post(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
-    # --------------------------------------
+    # ========================================================
     # FIND POST
-    # --------------------------------------
+    # ========================================================
 
     post = db.query(
         Post
@@ -447,9 +681,9 @@ async def update_post(
             detail="Post not found"
         )
 
-    # --------------------------------------
+    # ========================================================
     # OWNERSHIP CHECK
-    # --------------------------------------
+    # ========================================================
 
     if post.author_id != current_user.id:
 
@@ -461,33 +695,143 @@ async def update_post(
             )
         )
 
-    # --------------------------------------
+    # ========================================================
+    # FINAL STATUS
+    # ========================================================
+
+    final_status = (
+        post_status
+        if post_status is not None
+        else post.status
+    )
+
+    # ========================================================
+    # VALIDATE STATUS
+    # ========================================================
+
+    if final_status not in ALLOWED_POST_STATUSES:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid post status. "
+                "Allowed values are: "
+                "draft, published, scheduled."
+            )
+        )
+
+    # ========================================================
+    # CONVERT SCHEDULED TIME TO UTC
+    # ========================================================
+
+    scheduled_at = normalize_to_utc(
+        scheduled_at
+    )
+
+    # ========================================================
+    # FINAL SCHEDULED DATE
+    # ========================================================
+
+    final_scheduled_at = scheduled_at
+
+    if (
+        post_status is None
+        and scheduled_at is None
+    ):
+
+        final_scheduled_at = post.scheduled_at
+
+    # ========================================================
+    # FINAL STATUS VALIDATION
+    # ========================================================
+
+    # ========================================================
+    # DRAFT
+    # ========================================================
+
+    if final_status == "draft":
+
+        final_scheduled_at = None
+
+        final_published_at = None
+
+    # ========================================================
+    # PUBLISHED
+    # ========================================================
+
+    elif final_status == "published":
+
+        final_scheduled_at = None
+
+        if post.published_at is None:
+
+            final_published_at = datetime.utcnow()
+
+        else:
+
+            final_published_at = post.published_at
+
+    # ========================================================
+    # SCHEDULED
+    # ========================================================
+
+    else:
+
+        if final_scheduled_at is None:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Scheduled posts require "
+                    "a scheduled date and time."
+                )
+            )
+
+        if final_scheduled_at <= datetime.utcnow():
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Scheduled date and time "
+                    "must be in the future."
+                )
+            )
+
+        final_published_at = None
+
+    # ========================================================
     # UPDATE TITLE
-    # --------------------------------------
+    # ========================================================
 
     if title is not None:
 
         post.title = title
 
-    # --------------------------------------
+    # ========================================================
     # UPDATE CONTENT
-    # --------------------------------------
+    # ========================================================
 
     if content is not None:
 
         post.content = content
 
-    # --------------------------------------
+    # ========================================================
+    # UPDATE STATUS
+    # ========================================================
+
+    post.status = final_status
+
+    post.scheduled_at = final_scheduled_at
+
+    post.published_at = final_published_at
+
+    # ========================================================
     # UPDATE IMAGES
-    # --------------------------------------
+    # ========================================================
 
     uploaded_images = images or []
 
     if uploaded_images:
-
-        # ----------------------------------
-        # GET ACTIVE SUBSCRIPTION
-        # ----------------------------------
 
         active_subscription = get_active_subscription(
             db=db,
@@ -508,10 +852,6 @@ async def update_post(
 
         image_limit = plan.max_images_per_post
 
-        # ----------------------------------
-        # CHECK IMAGE LIMIT
-        # ----------------------------------
-
         if image_limit is not None:
 
             if len(uploaded_images) > image_limit:
@@ -524,9 +864,9 @@ async def update_post(
                     )
                 )
 
-        # ----------------------------------
-        # DELETE EXISTING POST IMAGES
-        # ----------------------------------
+        # ====================================================
+        # DELETE EXISTING IMAGES
+        # ====================================================
 
         existing_images = db.query(
             PostImage
@@ -544,9 +884,9 @@ async def update_post(
 
             db.delete(old_image)
 
-        # ----------------------------------
+        # ====================================================
         # UPLOAD NEW IMAGES
-        # ----------------------------------
+        # ====================================================
 
         for image in uploaded_images:
 
@@ -584,15 +924,17 @@ async def update_post(
                 file.write(contents)
 
             post_image = PostImage(
+
                 post_id=post.id,
+
                 image=f"/media/posts/{filename}"
             )
 
             db.add(post_image)
 
-        # ----------------------------------
+        # ====================================================
         # REMOVE OLD SINGLE IMAGE
-        # ----------------------------------
+        # ====================================================
 
         if post.image:
 
@@ -604,9 +946,9 @@ async def update_post(
 
             post.image = None
 
-    # --------------------------------------
+    # ========================================================
     # SAVE CHANGES
-    # --------------------------------------
+    # ========================================================
 
     db.commit()
 
@@ -615,10 +957,12 @@ async def update_post(
     return post
 
 
-# ==========================================
+# ============================================================
 # DELETE POST
-# Owner Only
-# ==========================================
+#
+# AUTHENTICATED
+# OWNER ONLY
+# ============================================================
 
 @router.delete(
     "/{post_id}"
@@ -632,11 +976,12 @@ def delete_post(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
-    # --------------------------------------
+    # ========================================================
     # FIND POST
-    # --------------------------------------
+    # ========================================================
 
     post = db.query(
         Post
@@ -651,9 +996,9 @@ def delete_post(
             detail="Post not found"
         )
 
-    # --------------------------------------
+    # ========================================================
     # OWNERSHIP CHECK
-    # --------------------------------------
+    # ========================================================
 
     if post.author_id != current_user.id:
 
@@ -665,9 +1010,9 @@ def delete_post(
             )
         )
 
-    # --------------------------------------
+    # ========================================================
     # DELETE OLD SINGLE IMAGE
-    # --------------------------------------
+    # ========================================================
 
     if post.image:
 
@@ -677,9 +1022,9 @@ def delete_post(
 
             os.remove(file_path)
 
-    # --------------------------------------
+    # ========================================================
     # DELETE MULTIPLE IMAGES
-    # --------------------------------------
+    # ========================================================
 
     post_images = db.query(
         PostImage
@@ -695,9 +1040,9 @@ def delete_post(
 
             os.remove(file_path)
 
-    # --------------------------------------
+    # ========================================================
     # DELETE POST
-    # --------------------------------------
+    # ========================================================
 
     db.delete(post)
 

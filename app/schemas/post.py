@@ -7,9 +7,9 @@ from pydantic import (
 )
 
 
-# =========================================================
+# ============================================================
 # CREATE POST
-# =========================================================
+# ============================================================
 
 class PostCreate(BaseModel):
 
@@ -24,10 +24,14 @@ class PostCreate(BaseModel):
         min_length=1
     )
 
+    status: str = "draft"
 
-# =========================================================
+    scheduled_at: datetime | None = None
+
+
+# ============================================================
 # UPDATE POST
-# =========================================================
+# ============================================================
 
 class PostUpdate(BaseModel):
 
@@ -42,10 +46,14 @@ class PostUpdate(BaseModel):
         min_length=1
     )
 
+    status: str | None = None
 
-# =========================================================
+    scheduled_at: datetime | None = None
+
+
+# ============================================================
 # POST IMAGE RESPONSE
-# =========================================================
+# ============================================================
 
 class PostImageResponse(BaseModel):
 
@@ -60,9 +68,9 @@ class PostImageResponse(BaseModel):
     )
 
 
-# =========================================================
+# ============================================================
 # POST RESPONSE
-# =========================================================
+# ============================================================
 
 class PostResponse(BaseModel):
 
@@ -72,15 +80,23 @@ class PostResponse(BaseModel):
 
     content: str
 
-    # Existing image field
     image: str | None = None
 
-    # New multiple images field
     images: list[PostImageResponse] = []
 
     author_id: int
 
     created_at: datetime
+
+    # --------------------------------------------------------
+    # SCHEDULING FIELDS
+    # --------------------------------------------------------
+
+    status: str
+
+    scheduled_at: datetime | None = None
+
+    published_at: datetime | None = None
 
     model_config = ConfigDict(
         from_attributes=True

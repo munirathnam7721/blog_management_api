@@ -1,9 +1,18 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.base import Base
 from app.database.connection import engine
+
+from app.services.scheduler_service import (
+    start_scheduler,
+    stop_scheduler
+)
+
 
 # ==========================================
 # IMPORT ALL MODELS
@@ -19,7 +28,9 @@ from app.models import (
     Subscription,
     BillingHistory,
     Notification,
+    AISupportChat,
 )
+
 
 # ==========================================
 # IMPORT ROUTERS
@@ -38,6 +49,10 @@ from app.routers.notifications import (
     router as notifications_router
 )
 
+from app.routers.ai_support import (
+    router as ai_support_router
+)
+
 
 # ==========================================
 # CREATE DATABASE TABLES
@@ -46,6 +61,46 @@ from app.routers.notifications import (
 Base.metadata.create_all(
     bind=engine
 )
+
+
+# ==========================================
+# APPLICATION LIFESPAN
+# ==========================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    # --------------------------------------
+    # STARTUP
+    # --------------------------------------
+
+    print(
+        "Starting Blog Management API..."
+    )
+
+    # Start scheduled post publisher
+    start_scheduler()
+
+    print(
+        "Blog Management API started."
+    )
+
+    yield
+
+    # --------------------------------------
+    # SHUTDOWN
+    # --------------------------------------
+
+    print(
+        "Stopping Blog Management API..."
+    )
+
+    # Stop scheduler
+    stop_scheduler()
+
+    print(
+        "Blog Management API stopped."
+    )
 
 
 # ==========================================
@@ -59,7 +114,24 @@ app = FastAPI(
         "FastAPI, MySQL, SQLAlchemy, "
         "JWT Authentication and Email Notifications."
     ),
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+
+# ==========================================
+# CORS CONFIGURATION
+# ==========================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -72,10 +144,13 @@ def custom_openapi():
 
     # If schema is already created,
     # return the existing schema
+
     if app.openapi_schema:
+
         return app.openapi_schema
 
     # Generate the normal OpenAPI schema
+
     schema = get_openapi(
         title=app.title,
         version=app.version,
@@ -90,10 +165,12 @@ def custom_openapi():
     def fix_file_schema(obj):
 
         # If current object is a dictionary
+
         if isinstance(obj, dict):
 
             # Convert application/octet-stream
             # into Swagger binary file format
+
             if obj.get(
                 "contentMediaType"
             ) == "application/octet-stream":
@@ -104,29 +181,38 @@ def custom_openapi():
                 )
 
                 obj["type"] = "string"
+
                 obj["format"] = "binary"
 
             # Check nested objects
+
             for value in obj.values():
+
                 fix_file_schema(value)
 
         # If current object is a list
+
         elif isinstance(obj, list):
 
             # Check every item
+
             for item in obj:
+
                 fix_file_schema(item)
 
     # Apply file upload fix
+
     fix_file_schema(schema)
 
     # Save modified schema
+
     app.openapi_schema = schema
 
     return app.openapi_schema
 
 
 # Replace FastAPI's default OpenAPI generator
+
 app.openapi = custom_openapi
 
 
@@ -146,38 +232,58 @@ app.mount(
 # ==========================================
 
 # Authentication
+
 app.include_router(
     auth.router
 )
 
+
 # Posts
+
 app.include_router(
     posts.router
 )
 
+
 # Comments
+
 app.include_router(
     comments.router
 )
 
+
 # Likes
+
 app.include_router(
     likes.router
 )
 
+
 # Subscriptions
+
 app.include_router(
     subscriptions.router
 )
 
+
 # Dashboard
+
 app.include_router(
     dashboard.router
 )
 
+
 # Notifications
+
 app.include_router(
     notifications_router
+)
+
+
+# AI Support
+
+app.include_router(
+    ai_support_router
 )
 
 

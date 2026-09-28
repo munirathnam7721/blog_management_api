@@ -34,11 +34,18 @@ class Post(Base):
         nullable=False
     )
 
-    # Existing single image field
+    # ==========================================
+    # IMAGE
+    # ==========================================
+
     image = Column(
         String(500),
         nullable=True
     )
+
+    # ==========================================
+    # AUTHOR
+    # ==========================================
 
     author_id = Column(
         Integer,
@@ -46,9 +53,41 @@ class Post(Base):
         nullable=False
     )
 
+    # ==========================================
+    # CREATED TIME
+    # ==========================================
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+
+    # ==========================================
+    # PUBLISHING STATUS
+    # ==========================================
+
+    status = Column(
+        String(20),
+        nullable=False,
+        default="draft"
+    )
+
+    # ==========================================
+    # SCHEDULED TIME
+    # ==========================================
+
+    scheduled_at = Column(
+        DateTime,
+        nullable=True
+    )
+
+    # ==========================================
+    # PUBLISHED TIME
+    # ==========================================
+
+    published_at = Column(
+        DateTime,
+        nullable=True
     )
 
     # ==========================================
